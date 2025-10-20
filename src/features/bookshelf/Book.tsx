@@ -16,6 +16,8 @@ const colorsByTag: Record<string, string> = {
   'JavaScript': '#f7df1e',
   'CSS': '#1572b6',
   'Node.js': '#339933',
+  'Vue': '#42b883',
+  'Python': '#3776ab',
   'Portfolio': '#a0826d',
   'Project': '#8b6f5c',
   'default': '#d4a574',
@@ -27,17 +29,23 @@ const getBookColor = (tags: string[]): string => {
   return colorsByTag[firstTag] || colorsByTag.default;
 };
 
-const getBookHeight = (title: string): number => {
-  // 제목 길이에 따라 책 높이 결정 (200-280px)
-  const baseHeight = 200;
-  const extraHeight = Math.min(title.length * 3, 80);
-  return baseHeight + extraHeight;
+const getBookHeight = (contentLength?: number): number => {
+  // 콘텐츠 길이에 따라 책 높이 결정 (180-300px)
+  if (!contentLength) return 200; // 기본값
+
+  const baseHeight = 180;
+  const maxHeight = 300;
+
+  // 1000자 기준으로 스케일링 (1000자 = 기본, 5000자+ = 최대)
+  const scaledHeight = baseHeight + (contentLength / 5000) * (maxHeight - baseHeight);
+
+  return Math.min(Math.max(scaledHeight, baseHeight), maxHeight);
 };
 
 export function Book({ post, index }: Props) {
   const [isHovered, setIsHovered] = useState(false);
   const bookColor = getBookColor(post.tags);
-  const bookHeight = getBookHeight(post.title);
+  const bookHeight = getBookHeight(post.contentLength);
   const isDark = ['#000000', '#3178c6'].includes(bookColor);
 
   return (
@@ -95,11 +103,14 @@ export function Book({ post, index }: Props) {
         {isHovered && (
           <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 bg-[var(--background)] border border-[var(--border)] p-4 rounded-lg shadow-xl w-64 pointer-events-none">
             <h3 className="font-bold mb-2 text-sm">{post.title}</h3>
+            {post.readingTime && (
+              <p className="text-xs opacity-60 mb-2">📖 {post.readingTime}분 소요</p>
+            )}
             {post.excerpt && (
               <p className="text-xs opacity-80 mb-2">{post.excerpt}</p>
             )}
             {post.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1 mt-2">
                 {post.tags.map((tag) => (
                   <span
                     key={tag}
