@@ -55,7 +55,6 @@ export function Header() {
             gnggnggyu_log
           </Link>
 
-          {/* 데스크탑 네비게이션 */}
           <div className="hidden md:flex items-center gap-3">
             {navLinks.map((link) => (
               <Link
@@ -73,7 +72,6 @@ export function Header() {
             <ThemeToggle />
           </div>
 
-          {/* 모바일 햄버거 버튼 */}
           <div className="md:hidden flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -86,19 +84,18 @@ export function Header() {
         </nav>
       </header>
 
-      {/* 모바일 사이드바 */}
       <div
         className={`fixed inset-0 z-40 md:hidden transition-opacity duration-300 ${
-          mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          mobileMenuOpen
+            ? 'opacity-100 pointer-events-auto'
+            : 'opacity-0 pointer-events-none'
         }`}
       >
-        {/* 오버레이 */}
         <div
           className="absolute inset-0 bg-black/50 backdrop-blur-sm"
           onClick={() => setMobileMenuOpen(false)}
         />
 
-        {/* 사이드바 */}
         <div
           className={`absolute right-0 top-0 h-full w-64 bg-[var(--background)] border-l border-[var(--border)] shadow-2xl transition-transform duration-300 ${
             mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
@@ -134,8 +131,7 @@ export function Header() {
         </div>
       </div>
 
-      {/* 모바일 플로팅 테마 토글 버튼 */}
-      <div className="md:hidden fixed bottom-6 right-6 z-50 backdrop-blur-md bg-[var(--background)]/80 border border-[var(--border)] rounded-full p-3 shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300">
+      <div className="md:hidden fixed bottom-6 right-6 z-50 backdrop-blur-md bg-[var(--background)]/80 border border-[var(--border)] rounded-full p-3 shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-30 h-[50px]">
         <ThemeToggle />
       </div>
     </>
