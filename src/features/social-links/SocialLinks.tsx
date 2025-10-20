@@ -2,6 +2,7 @@
 
 import { FaGithub, FaLinkedin, FaEnvelope } from 'react-icons/fa';
 import { HiLink } from 'react-icons/hi2';
+import { useScrollAnimation } from '@/shared/hooks';
 
 interface LinkItem {
   name: string;
@@ -38,8 +39,15 @@ const links: LinkItem[] = [
 ];
 
 export function SocialLinks() {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.5 });
+
   return (
-    <section className="my-16">
+    <section
+      ref={ref}
+      className={`my-16 transition-all duration-1000 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'
+      }`}
+    >
       <div className="max-w-4xl mx-auto px-4">
         {/* 제목 */}
         <div className="text-center mb-8">

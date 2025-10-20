@@ -1,6 +1,7 @@
 'use client';
 
 import { FaBlog } from 'react-icons/fa';
+import { useScrollAnimation } from '@/shared/hooks';
 
 interface BlogItem {
   name: string;
@@ -29,9 +30,17 @@ const blogs: BlogItem[] = [
     color: '#03C75A',
   },
 ];
+
 export function BlogSection() {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.5 });
+
   return (
-    <section className="my-16">
+    <section
+      ref={ref}
+      className={`my-16 transition-all duration-1000 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'
+      }`}
+    >
       <div className="max-w-4xl mx-auto px-4">
         {/* 제목 */}
         <div className="text-center mb-8">

@@ -4,12 +4,15 @@ import Link from "next/link";
 import { PostMeta } from "@/entities/post";
 import { Book } from "./Book";
 import { HiLightBulb } from "react-icons/hi2";
+import { useScrollAnimation } from "@/shared/hooks";
 
 interface Props {
   posts: PostMeta[];
 }
 
 export function Bookshelf({ posts }: Props) {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.5 });
+
   if (posts.length === 0) return null;
 
   // 최대 10개만 표시
@@ -17,7 +20,12 @@ export function Bookshelf({ posts }: Props) {
   const hasMore = posts.length > 10;
 
   return (
-    <section className="my-16">
+    <section
+      ref={ref}
+      className={`my-16 transition-all duration-1000 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'
+      }`}
+    >
       <div className="text-center mb-12">
         <h2 className="text-4xl font-bold mb-4">최근 포스트</h2>
         <p className="text-lg opacity-80">
