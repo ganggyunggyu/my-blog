@@ -1,7 +1,7 @@
 'use client';
 
-import { FaGithub, FaLinkedin, FaEnvelope } from "react-icons/fa";
-import { HiLink } from "react-icons/hi2";
+import { FaGithub, FaLinkedin, FaEnvelope } from 'react-icons/fa';
+import { HiLink } from 'react-icons/hi2';
 
 interface LinkItem {
   name: string;
@@ -12,28 +12,28 @@ interface LinkItem {
 
 const links: LinkItem[] = [
   {
-    name: "GitHub",
-    url: "https://github.com/ganggyunggyu",
+    name: 'GitHub',
+    url: 'https://github.com/ganggyunggyu',
     icon: <FaGithub />,
-    color: "#333333",
+    color: '#333333',
   },
   {
-    name: "LinkedIn",
-    url: "https://linkedin.com/in/yourprofile",
+    name: 'LinkedIn',
+    url: 'www.linkedin.com/in/gyunggyugang',
     icon: <FaLinkedin />,
-    color: "#0A66C2",
+    color: '#0A66C2',
   },
   {
-    name: "Email",
-    url: "mailto:your.email@example.com",
+    name: 'Email',
+    url: 'ganggyunggyi@gmail.com',
     icon: <FaEnvelope />,
-    color: "#EA4335",
+    color: '#EA4335',
   },
   {
-    name: "Portfolio",
-    url: "https://yourportfolio.com",
+    name: 'Portfolio',
+    url: 'https://yourportfolio.com',
     icon: <HiLink />,
-    color: "#a0826d",
+    color: '#a0826d',
   },
 ];
 
@@ -44,9 +44,7 @@ export function SocialLinks() {
         {/* 제목 */}
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold mb-2">Connect</h2>
-          <p className="text-base opacity-70">
-            다양한 채널에서 만나보세요
-          </p>
+          <p className="text-base opacity-70">다양한 채널에서 만나보세요</p>
         </div>
 
         {/* 북마크 스타일 링크들 */}
@@ -59,7 +57,7 @@ export function SocialLinks() {
               rel="noopener noreferrer"
               className="group relative"
               style={{
-                animation: `fade-in-up 0.5s ease-out ${index * 0.1}s both`
+                animation: `fade-in-up 0.5s ease-out ${index * 0.1}s both`,
               }}
             >
               {/* 북마크 카드 */}
