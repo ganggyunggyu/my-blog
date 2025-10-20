@@ -62,6 +62,12 @@ export default async function PostPage({ params }: Props) {
             <time dateTime={new Date(post.date).toISOString().split('T')[0]}>
               {format(new Date(post.date), "yyyy년 MM월 dd일")}
             </time>
+            {post.readingTime && (
+              <>
+                <span>•</span>
+                <span>📖 {post.readingTime}분 소요</span>
+              </>
+            )}
           </div>
           {post.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
