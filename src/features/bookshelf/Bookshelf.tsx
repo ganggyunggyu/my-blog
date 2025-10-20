@@ -1,5 +1,6 @@
 'use client';
 
+import Link from "next/link";
 import { PostMeta } from "@/entities/post";
 import { Book } from "./Book";
 import { HiLightBulb } from "react-icons/hi2";
@@ -68,9 +69,9 @@ export function Bookshelf({ posts }: Props) {
         </p>
         {hasMore && (
           <p className="mt-2">
-            <a href="/posts" className="text-[var(--accent)] hover:underline">
+            <Link href="/posts" className="text-[var(--accent)] hover:underline">
               전체 {posts.length}개의 포스트 보기 →
-            </a>
+            </Link>
           </p>
         )}
       </div>
