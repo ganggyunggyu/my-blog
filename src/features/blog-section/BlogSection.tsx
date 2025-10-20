@@ -13,23 +13,22 @@ const blogs: BlogItem[] = [
   {
     name: 'Naver Blog',
     url: 'https://blog.naver.com/ddo_ddi_appa',
-    description: '개발 일상과 기록들',
+    description: '행궁 언덕살이',
     color: '#03C75A',
   },
   {
     name: 'Naver Blog',
     url: 'https://blog.naver.com/gnggnggyu_',
-    description: '개발 일상과 기록들',
+    description: '규덩이',
     color: '#03C75A',
   },
   {
     name: 'Naver Blog',
     url: 'https://blog.naver.com/mm__mm984',
-    description: '개발 일상과 기록들',
+    description: '감뽕이',
     color: '#03C75A',
   },
 ];
-
 export function BlogSection() {
   return (
     <section className="my-16">
