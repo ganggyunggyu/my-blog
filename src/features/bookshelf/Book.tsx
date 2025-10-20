@@ -65,16 +65,59 @@ export function Book({ post, index }: Props) {
         style={{
           width: '80px',
           height: `${bookHeight}px`,
-          backgroundColor: bookColor,
-          border: '2px solid rgba(0,0,0,0.2)',
+          background: `
+            linear-gradient(135deg,
+              ${bookColor} 0%,
+              color-mix(in srgb, ${bookColor} 85%, white) 50%,
+              color-mix(in srgb, ${bookColor} 70%, black) 100%
+            )
+          `,
+          border: '2px solid rgba(0,0,0,0.3)',
+          borderRadius: '0 4px 4px 0',
           boxShadow: isHovered
-            ? '0 10px 30px rgba(0,0,0,0.3)'
-            : '2px 2px 5px rgba(0,0,0,0.2)',
+            ? '0 10px 30px rgba(0,0,0,0.4), inset -2px 0 8px rgba(0,0,0,0.3)'
+            : '3px 3px 8px rgba(0,0,0,0.3), inset -2px 0 5px rgba(0,0,0,0.2)',
           transformStyle: 'preserve-3d',
+          position: 'relative',
         }}
       >
+        {/* 가죽 질감 오버레이 */}
+        <div
+          className="absolute inset-0 pointer-events-none rounded-r"
+          style={{
+            background: `
+              repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,0,0,0.03) 2px,
+                rgba(0,0,0,0.03) 4px
+              )
+            `,
+            mixBlendMode: 'multiply',
+          }}
+        />
+
+        {/* 골드 상단 라인 */}
+        <div
+          className="absolute top-2 left-2 right-2 h-0.5"
+          style={{
+            background: 'linear-gradient(90deg, transparent, #d4af37, transparent)',
+            opacity: 0.6,
+          }}
+        />
+
+        {/* 골드 하단 라인 */}
+        <div
+          className="absolute bottom-2 left-2 right-2 h-0.5"
+          style={{
+            background: 'linear-gradient(90deg, transparent, #d4af37, transparent)',
+            opacity: 0.6,
+          }}
+        />
+
         {/* 책 등 */}
-        <div className="absolute inset-0 flex items-center justify-center p-2">
+        <div className="absolute inset-0 flex items-center justify-center p-2 z-10">
           <p
             className={`text-xs font-bold text-center break-words leading-tight ${
               isDark ? 'text-white' : 'text-[var(--foreground)]'
@@ -83,19 +126,36 @@ export function Book({ post, index }: Props) {
               writingMode: 'vertical-rl',
               textOrientation: 'mixed',
               letterSpacing: '2px',
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)',
             }}
           >
             {post.title}
           </p>
         </div>
 
-        {/* 책 옆면 (3D 효과) */}
+        {/* 페이지 효과 (오른쪽) */}
         <div
-          className="absolute top-0 right-0 h-full w-2"
+          className="absolute top-1 right-0 bottom-1 w-1"
           style={{
-            backgroundColor: `color-mix(in srgb, ${bookColor} 70%, black)`,
-            transform: 'rotateY(90deg) translateZ(1px)',
+            background: 'linear-gradient(180deg, #f5f5dc 0%, #e8e8d0 50%, #d0d0b8 100%)',
+            boxShadow: 'inset -1px 0 2px rgba(0,0,0,0.2)',
+            borderRadius: '0 2px 2px 0',
+          }}
+        />
+
+        {/* 책 옆면 (3D 효과) - 더 두껍게 */}
+        <div
+          className="absolute top-0 right-0 h-full w-3"
+          style={{
+            background: `
+              linear-gradient(90deg,
+                color-mix(in srgb, ${bookColor} 60%, black) 0%,
+                color-mix(in srgb, ${bookColor} 50%, black) 100%
+              )
+            `,
+            transform: 'rotateY(90deg) translateZ(1.5px)',
             transformOrigin: 'right',
+            borderRadius: '0 2px 2px 0',
           }}
         />
 
