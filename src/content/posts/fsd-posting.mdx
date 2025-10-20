@@ -1,0 +1,285 @@
+---
+title: 프론트엔드 아키텍처 기존 폴더 구조에서 FSD로 리펙토링
+date: 2024-05-23
+tags: [프론트엔드, 아키텍처, FSD, 리펙토링]
+excerpt: 취업 준비 중 블로그 기록을 재개하며, 프론트엔드 프로젝트의 폴더 구조 리펙토링 과정을 공유합니다. 기존 구조의 문제점과 FSD 아키텍처 적용 사례를 설명합니다.
+---
+
+# 프론트엔드 아키텍처: 기존 폴더 구조에서 FSD로 리펙토링
+
+그 동안 취업 준비도 하고 면접도 보고 이력서도 많이 고치며 지냈습니다. 그러나 아직 취준생이네요. 블로그도 잘 안 쓰게 됐는데 기록하는 습관이 무뎌진 것 같아서 주에 한번은 그 동안의 개인 프로젝트 리펙토링 과정과 앞으로 하게 될 작업들의 과정을 담아보려고 합니다.
+
+요즘 가장 시간을 많이 쓰고 있는 작업 중 하나인 프론트엔드 아키텍처, 그냥 쉽게 말하자면 파일 분할과 폴더 구조에 대해 설명하고 담아보려 합니다.
+
+## 기존의 폴더 구조
+
+기존의 폴더 구조에 대해 설명 드려 보겠습니다.
+
+### pages
+
+main.js -> App.js 다음 가장 최상위 계층인 pages 폴더 입니다. 이렇게 각 페이지의 라우팅을 의미하는 파일들을 모아뒀습니다. 이 파일들은 App.js 파일에서 다음과 같이 사용됩니다.
+
+```jsx
+<div className={cn(`${darkModeClasses} transition-all`)}>
+  <Header />
+  <div className="mt-12 flex flex-col items-center justify-center">
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/mypage/:userId" element={<MyPage />} />
+      <Route path="/join" element={<Join />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/serch" element={<Serch />} />
+      <Route
+        path="/content/:contentType/:contentId"
+        element={<ContentDetail />}
+      />
+      <Route
+        path="/detail/review/:userId/:reviewId"
+        element={<ReviewDetail />}
+      />
+      <Route path="/create/:contentType/:contentId" element={<Create />} />
+      <Route path="/update/:userId/:reviewId" element={<Update />} />
+      <Route path="/auth" element={<KakaoLogin />} />
+    </Routes>
+  </div>
+  <DarkModeButton darkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+</div>
+```
+
+각 path에 맞는 파일로 라우팅 됩니다.
+
+### components
+
+pages 다음 계층인 components에는 page마다 사용되는 컴포넌트와 공통적으로 사용되는 컴포넌트로 분류를 해두었습니다. 예를 들자면 join 폴더 안에 있는 컴포넌트는 Join.js 에서 조합되어 사용되는 용도의 컴포넌트가 됩니다. 핵심만 말씀 드려보자면 라우팅에 컴포넌트의 폴더 구조를 맞췄다. 라고 볼 수 있겠습니다.
+
+그러나 모든 것을 그렇게 맞출 순 없었는데 그 이유는 card 컴포넌트는 리뷰에도 쓰이고 콘텐츠에서도 쓰이기 때문입니다. wrap-provider의 경우에도 반응형을 위한 provider 컴포넌트, 카드 리스트 provider 컴포넌트 등 공통적으로 사용 되는 컴포넌트가 있기 때문에 일관성이 좀 부족한 구조라는 것을 항상 생각 하고 있었습니다.
+
+### hooks, utils, etc..
+
+다음으론 hooks와 utils 그리고 요청에 대한 역할만을 하는 함수를 api라는 폴더에 모아 뒀는데 hooks는 굳이 따지자면 components의 바로 다음 계층이라고 보면 됩니다. 왜냐면 utils와 api 폴더에 있는 파일들은 hooks에서 만든 함수들을 가져다 쓸 일이 없기 때문입니다.
+
+아무튼 얘네들은 거의 공통적으로 어디서든 가져다 쓸 수 있는 share 파일이라고 볼 수 있어서 한번에 묶어서 설명하겠습니다.
+
+#### hooks
+
+이 hooks는 도메인 별로 폴더가 나뉘어져 있습니다. 여기서의 도메인은 카카오톡으로 따지자면 user(회원), chat(채팅), gift(선물)와 같이 하나의 독립적인 테이블이라고 볼 수 있습니다. routing을 기준으로 파일을 생성하려 하니 다양한 route에서 공통적으로 쓰이는 hook이 많아져서 불필요하게 같은 기능을 하는 hook이 많아짐을 느껴서 이런 구조로 만들게 되었습니다.
+
+여기서 부터 슬슬 저는 불편함을 느끼기 시작합니다. 예시를 하나 보자면 src/hooks/review 이렇게 하나의 도메인에 대한 CRUD hook들이 저장 되어 있습니다.
+
+#### utils, api, config
+
+이들은 정말 어디서든 가져다 쓸수 있는 함수들 입니다.
+
+- **utils**: 여기저기서 쓰이는 기능들을 모아 둔 폴더입니다.
+- **api**: 요청과 관련된 함수들이 모여있습니다.
+- **config**: 환경변수, axios create를 이용한 요청 설정 파일이 있습니다.
+
+여기서 api 폴더에도 AxiosConfig.ts 파일이 있죠? 불편함을 느껴 config 파일로 옮긴 상태입니다.
+
+### 정리
+
+이렇게 보았을때 사람마다 관점이 다르겠지만 저로서는 어디서는 Routing을 기준으로 나뉜 폴더 어디서는 도메인을 기준으로 나뉜 폴더 들이 매우 보기 불편했고, 일관성이 떨어져서 매일 작업하는 저도 기능을 찾거나 수정할때 해매는 경우가 생겼습니다. 협업이였다면 아주 치명적일수 있다는 생각이 들었고 어떻게 해결할까 하던 찰나.. FSD 폴더 구조에 대해 알게 되었다.
+
+https://www.youtube.com/watch?v=64Fx5Y1gEOA 제로초님의 영상을 보게 됩니다. 이 영상을 보고 제가 고민하던 것들이 해소되는 기분이 들었죠.
+
+제가 이해한 FSD 아키텍처에 대해 설명 들어갑니다. 물론 다른 글들도 많이 찾아보고 내린 결론입니다.
+
+참고 링크:
+
+- https://velog.io/@jay/fsd
+- https://emewjin.github.io/feature-sliced-design/
+- https://github.com/ani-team/github-client
+- https://github.com/UmttikhinaDasha/IT-Bookstore
+
+## FSD 아키텍처 소개
+
+FSD란 Feature Slice Design의 줄임말 입니다. 계층구조를 다음과 같이 구성합니다.
+
+### app
+
+앱의 전체적으로 영향을 미치는 모듈을 저장합니다. 레이아웃, 전역 css와 같은데 사실.. 이건 다들 프로젝트마다 다를 것이라 생각합니다.
+
+저의 경우에는 이렇게 구성 하였는데 전체적으로 적용 되는 레이아웃 컴포넌트와 어느 페이지에서도 보이는 버튼 그리고 에러 처리하는 페이지와 라우팅이 진행 되는 동안 보여지는 full-back 페이지 등을 app 폴더에 넣어주었고, 전역 스타일도 넣어 주었습니다. 아직 리펙토링 중인데 types와 store(redux slice)는 각 도메인에 맞는 폴더로 옮길 예정입니다.
+
+```jsx
+// src/app/index.tsx
+import './styles/App.css';
+import { Suspense } from 'react';
+import Footer from './footer';
+import Header from './header';
+import DarkModeButton from './dark-mode-button';
+import Routing from '../pages';
+import ErrorProvider from './error-provider';
+import Fullback from './full-back';
+import { cn } from '../shared/lib/cn';
+import { useAppSelector } from './store';
+import { ErrorBoundary } from 'react-error-boundary';
+
+function App() {
+  const { darkModeClasses } = useAppSelector((state) => state.darkMode);
+
+  return (
+    <main className={cn(`${darkModeClasses} transition-all`)}>
+      <Header />
+      <ErrorBoundary fallback={<ErrorProvider />}>
+        <Suspense fallback={<Fullback />}>
+          <Routing />
+        </Suspense>
+      </ErrorBoundary>
+      <Footer />
+      <DarkModeButton />
+    </main>
+  );
+}
+
+export default App;
+```
+
+### pages
+
+pages의 경우 이전과 거의 동일합니다. 그러나 다른 점은 lazy import를 적용하여 초기 로딩 속도를 올렸다는 부분과 라우팅에 대한 폴더를 하나씩 만들어 그 안에 index.tsx파일을 생성하여 import/export의 방식이 살짝 달라졌다는 부분이 있겠습니다.
+
+error와 ui폴더의 경우엔 라우팅은 아니지만:
+
+- **ui폴더**: pages에서 사용되는 반응형을 위한 provider, background image가 습니다.
+- **error 폴더**: error 코드 (4xx, 5xx)에 따른 error 페이지를 모아 두었습니다.
+
+위 두 폴더를 app에 배치하지 않은 이유는 상황에 따라 가로로 정렬되는 화면 세로로 정렬되는 화면이 달라지고, error 코드에 따라 다른 페이지를 보여줘야 하기 때문입니다.
+
+```jsx
+// src/pages/index.tsx
+import React from 'react';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+
+import { scrollToTop } from '../shared/lib/scrollToTop';
+import { useAppDispatch } from '../app/store';
+import { setPrevPathName } from '../app/store/slice/prevPathName';
+
+const HomePage = React.lazy(() => import('./home'));
+const ProfilePage = React.lazy(() => import('./profile'));
+const JoinPage = React.lazy(() => import('./join'));
+const LoginPage = React.lazy(() => import('./login'));
+const SearchPage = React.lazy(() => import('./search'));
+const ContentDetailPage = React.lazy(() => import('./content-detail'));
+const ReviewDetailPage = React.lazy(() => import('./review-detail'));
+const UpdatePage = React.lazy(() => import('./update'));
+
+const Routing: React.FC = () => {
+  const location = useLocation();
+  const dispatch = useAppDispatch();
+
+  React.useEffect(() => {
+    const scrollTop = scrollToTop();
+    const isLoginPage = location.pathname === '/login';
+    if (!isLoginPage) dispatch(setPrevPathName(location.pathname));
+    return () => scrollTop;
+  }, [location, dispatch]);
+
+  return (
+    <section className="mt-12 flex flex-col items-center justify-center">
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/profile/:userIdParam" element={<ProfilePage />} />
+        <Route path="/join" element={<JoinPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/search" element={<SearchPage />} />
+        <Route
+          path="/content/:contentTypeParam/:contentIdParam"
+          element={<ContentDetailPage />}
+        />
+        <Route
+          path="/detail/review/:userIdParam/:reviewIdParam"
+          element={<ReviewDetailPage />}
+        />
+        <Route
+          path="/update/:userIdParam/:reviewIdParam"
+          element={<UpdatePage />}
+        />
+        <Route path="*" element={<Navigate to={'/'} />} />
+      </Routes>
+    </section>
+  );
+};
+
+export default Routing;
+```
+
+이렇게 만들어진 Routing 모듈은 app/index.tsx에 import 하여 사용됩니다.
+
+### features, entities
+
+예시에서는 entities의 하위 구조만 그렸지만 features와 wigets에서도 동일하게 도메인을 기준으로 하위 구조를 가지게 됩니다. 그러나 꼭 위에 있는 폴더 구조를 반드시 따라야 하는 것은 아닙니다. 저는 widgets 폴더까지 나눌 필요는 없다고 느껴 제외하였습니다.
+
+entities는 아직 리펙토링 중인 이유로 features를 예시로 들어 어떤 식으로 구조로 작업을 했는지, 그리고 entities는 앞으로 어떻게 리펙토링 할건지 말씀 드려보겠습니다.
+
+features의 폴더 구조입니다. 저의 프로젝트의 도메인 별로 폴더를 나누었고 error 폴더의 경우는 상위 pages에서 마무리 짓게 될것 같습니다. (삭제할거란 의미)
+
+features에는 ui/hooks/types의 구조로 작업을 하고 있는데, 실제 기능을 하는 비즈니스 로직의 경우는 features에서 작업하여 동일한 도메인의 entities 컴포넌트를 import하여 사용할 예정입니다.
+
+파일을 한번 보자면:
+
+```jsx
+// src/features/user/ui/ProfileContainer.tsx
+import ProfileImage from '../../../entities/profile/ProfileImage';
+import ProfileInfo from '../../../entities/profile/ProfileInfo';
+import ProfileScore from '../../../entities/profile/ProfileScore';
+
+export default function ProfileContainer() {
+  return (
+    <article className="flex flex-col justify-start w-full gap-5">
+      <ProfileImage />
+      <ProfileInfo />
+      <ProfileScore />
+    </article>
+  );
+}
+```
+
+이렇게 지금은 ui 관련된 부분만 import해서 사용하고 있지만, hooks를 features에서 호출하여 각 컴포넌트에 필요한 데이터를 props로 넘겨주어 계층을 만들 생각입니다.
+
+entities/user에 있는 파일들은 features/user 파일에서만 사용 되어야 그 계층이 확실해 진다고 생각하여 그렇게 작업할 예정입니다.
+
+```jsx
+// src/features/user/ui/ProfileContainer.tsx
+import ProfileImage from '../../../entities/profile/ProfileImage';
+import ProfileInfo from '../../../entities/profile/ProfileInfo';
+import ProfileScore from '../../../entities/profile/ProfileScore';
+import useUserFetch from '../hooks/userUserFetch';
+
+export default function ProfileContainer() {
+  const user = useUserFetch();
+  return (
+    <article className="flex flex-col justify-start w-full gap-5">
+      <ProfileImage image={user.image} />
+      <ProfileInfo info={user.info} />
+      <ProfileScore score={user.score} />
+    </article>
+  );
+}
+```
+
+예시로 써본 건데 이런 형식이 될것 같습니다. 그렇게 되면 user라는 하나의 도메인에서 features -> entities를 거쳐 하나의 종속성이 생기고, 상위 계층인 pages에서 features의 어떤 모듈을 import 하는 경우 각각의 역할이 뚜렷하게 분리되어 있어서 각 모듈들이 머릿속에서 의도하는 대로 동작할 것이라고 생각이 됩니다.
+
+features와 entities의 경우 아직 작업중이라 제가 생각한대로 의도한대로 동작할지 하지 않을지 확실하지 않아서 리펙토링하며 더 좋은 구조에 대해 포스팅 해보겠습니다.. ㅎㅎ🤣
+
+### shared
+
+말그대로 어디서든 사용 가능한 것들 입니다. 저의 경우에는 atom-component, icons, lib(utils)로 구성할 생각입니다. entities, features, pages, app 어디서든 사용 되는 가장 낮은 계층의 폴더가 되겠습니다.
+
+## 마무르기
+
+제가 생각하는 핵심은 확실한 계층 구조와 비즈니스 로직, 추상화 로직을 분리하여 기능 추가 및 리펙토링을 할때 계층이 여기저기 엮여있지 않아 더욱 간단하게 할수 있게 하는 것이라고 생각했습니다.
+
+또한 도메인을 기준으로 하여 그 안에서 ui에 관한 부분과 api에 관한 부분을 분리하게 되는데 작업하는 동안 요즘 공부하는 Nest.js의 기본 폴더 구조와 많이 닮아있다는 생각이 들었네요. 프론트-백 둘 다 작업하고 있는 입장에서 비슷한 폴더 구조는 작업에 매우 용이했습니다.
+
+항상 짧고 간단 명료하게 써야지 하는데 쓰다보면 또 아닌가 싶고 정보를 찾아보고 부가 설명을 넣고 예시를 넣고 저의 작업물을 넣고 하다보면 너무 방대해진단 생각이 듭니다. 분명 오류가 있을수 있겠지만 그래도 유용한 아키텍처라고 생각하고 좋은 글들도 많이 공유했으니 봐줘잉
+
+이딴걸 FSD 아키텍처라고 할수 있나 ? 태클은 언제나 환영입니다
+
+출처 모음 (그냥공부자료):
+
+- https://www.youtube.com/watch?v=64Fx5Y1gEOA
+- https://velog.io/@jay/fsd
+- https://emewjin.github.io/feature-sliced-design/
+- https://github.com/ani-team/github-client
+- https://github.com/UmttikhinaDasha/IT-Bookstore
