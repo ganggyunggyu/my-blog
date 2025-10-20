@@ -123,7 +123,23 @@ export const MDXComponents = {
       const [copied, setCopied] = useState(false);
 
       const handleCopy = () => {
-        const code = props.children?.toString() || '';
+        // props.children이 code 태그를 포함하는 경우 처리
+        const getTextContent = (node: unknown): string => {
+          if (typeof node === 'string') return node;
+          if (Array.isArray(node)) return node.map(getTextContent).join('');
+          if (node && typeof node === 'object' && !Array.isArray(node)) {
+            const obj = node as Record<string, unknown>;
+            if ('props' in obj && obj.props && typeof obj.props === 'object') {
+              const propsObj = obj.props as Record<string, unknown>;
+              if ('children' in propsObj) {
+                return getTextContent(propsObj.children);
+              }
+            }
+          }
+          return '';
+        };
+
+        const code = getTextContent(props.children);
         navigator.clipboard.writeText(code);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
