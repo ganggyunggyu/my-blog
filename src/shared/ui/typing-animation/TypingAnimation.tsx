@@ -24,11 +24,11 @@ export function TypingAnimation({ text, speed = 50, className = '' }: Props) {
   }, [currentIndex, text, speed]);
 
   return (
-    <span className={className}>
+    <figure className={`whitespace-pre-line ${className}`}>
       {displayText}
       {currentIndex < text.length && (
-        <span className="inline-block w-0.5 h-5 bg-current ml-1 animate-pulse" />
+        <p className="inline-block w-0.5 h-5 bg-current ml-1 animate-pulse" />
       )}
-    </span>
+    </figure>
   );
 }
