@@ -8,9 +8,9 @@ export default function Home() {
   return (
     <div className="space-y-12">
       <section className="text-center py-20">
-        <h1 className="text-5xl font-bold mb-4">개발 블로그에 오신 것을 환영합니다</h1>
+        <h1 className="text-5xl font-bold mb-4">안녕하세요, 감겸규입니다</h1>
         <p className="text-xl opacity-80 mb-8">
-          Next.js와 MDX로 만든 미니멀한 개발 블로그
+          프론트엔드 개발자로 성장하며 배운 것들을 기록합니다
         </p>
         <Link
           href="/posts"

@@ -2,6 +2,8 @@
   "name": "kkk-blog",
   "version": "0.1.0",
   "private": true,
+  "author": "감겸규",
+  "description": "감겸규의 개발 블로그",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",

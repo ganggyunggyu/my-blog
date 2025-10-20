@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 개발 블로그
 
-## Getting Started
+> 강경규 기술 블로그
 
-First, run the development server:
+## 🚀 Tech Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4
+- **Content**: MDX
+- **Architecture**: FSD (Feature-Sliced Design)
+
+## 📂 프로젝트 구조
+
+```
+src/
+├── app/              # Next.js App Router (라우팅, 레이아웃)
+├── widgets/          # 독립적 UI 블록 (Header)
+├── features/         # 비즈니스 기능 (markdown-editor)
+├── entities/         # 도메인 엔티티 (post)
+├── shared/           # 공용 유틸리티, UI
+└── content/          # MDX 포스트 파일
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ 개발 환경 설정
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# 의존성 설치
+pnpm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# 개발 서버 실행
+pnpm dev
 
-## Learn More
+# 프로덕션 빌드
+pnpm build
 
-To learn more about Next.js, take a look at the following resources:
+# 프로덕션 서버 실행
+pnpm start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## ✍️ 포스트 작성
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. `src/content/posts/` 디렉토리에 `.mdx` 파일 생성
+2. Front Matter 작성:
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```mdx
+---
+title: 포스트 제목
+date: 2025-01-20
+tags: [React, Next.js]
+excerpt: 포스트 요약
+---
+```
