@@ -41,7 +41,9 @@ export function Header() {
           <Link
             href="/"
             className={`vintage-button text-sm ${
-              isActive('/') && pathname === '/' ? 'bg-[var(--accent)] text-[var(--background)] border-[var(--accent)]' : ''
+              isActive('/') && pathname === '/'
+                ? 'bg-[var(--accent)] text-[var(--background)] border-[var(--accent)]'
+                : ''
             }`}
           >
             홈
@@ -49,7 +51,9 @@ export function Header() {
           <Link
             href="/posts"
             className={`vintage-button text-sm ${
-              isActive('/posts') ? 'bg-[var(--accent)] text-[var(--background)] border-[var(--accent)]' : ''
+              isActive('/posts')
+                ? 'bg-[var(--accent)] text-[var(--background)] border-[var(--accent)]'
+                : ''
             }`}
           >
             포스트
@@ -57,7 +61,9 @@ export function Header() {
           <Link
             href="/editor"
             className={`vintage-button text-sm ${
-              isActive('/editor') ? 'bg-[var(--accent)] text-[var(--background)] border-[var(--accent)]' : ''
+              isActive('/editor')
+                ? 'bg-[var(--accent)] text-[var(--background)] border-[var(--accent)]'
+                : ''
             }`}
           >
             에디터
