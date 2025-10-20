@@ -34,7 +34,7 @@ export function Header() {
           href="/"
           className="text-xl font-bold hover:text-[var(--accent)] transition-all duration-300 hover:scale-105"
         >
-          감겸규.log
+          gnggnggyu_log
         </Link>
 
         <div className="flex items-center gap-3">

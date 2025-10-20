@@ -1,8 +1,8 @@
 'use client';
 
-import Link from "next/link";
-import { AboutSection } from "./AboutSection";
-import { HiDocumentText, HiPencilSquare } from "react-icons/hi2";
+import Link from 'next/link';
+import { AboutSection } from './AboutSection';
+import { HiDocumentText, HiPencilSquare } from 'react-icons/hi2';
 
 export function HeroSection() {
   return (
@@ -25,8 +25,11 @@ export function HeroSection() {
         {/* 빈티지 장식 상단 */}
         <div className="text-4xl mb-6 opacity-50">✦</div>
 
-        <h1 className="text-6xl font-bold mb-6 animate-fade-in" style={{ fontFamily: 'Georgia, serif' }}>
-          감겸규.log
+        <h1
+          className="text-6xl font-bold mb-6 animate-fade-in"
+          style={{ fontFamily: 'Georgia, serif' }}
+        >
+          gnggnggyu_log
         </h1>
 
         <p className="text-2xl opacity-80 mb-8 italic animate-fade-in">
@@ -48,8 +51,7 @@ export function HeroSection() {
             href="/editor"
             className="vintage-button text-base px-8 py-3 flex items-center gap-2"
           >
-            <HiPencilSquare className="text-lg" />
-            글 작성하기
+            <HiPencilSquare className="text-lg" />글 작성하기
           </Link>
         </div>
 
