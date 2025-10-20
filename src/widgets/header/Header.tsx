@@ -135,10 +135,8 @@ export function Header() {
       </div>
 
       {/* 모바일 플로팅 테마 토글 버튼 */}
-      <div className="md:hidden fixed bottom-6 right-6 z-50">
-        <div className="backdrop-blur-md bg-[var(--background)]/80 border border-[var(--border)] rounded-full p-3 shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300">
-          <ThemeToggle />
-        </div>
+      <div className="md:hidden fixed bottom-6 right-6 z-50 backdrop-blur-md bg-[var(--background)]/80 border border-[var(--border)] rounded-full p-3 shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300">
+        <ThemeToggle />
       </div>
     </>
   );
