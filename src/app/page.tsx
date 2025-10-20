@@ -6,7 +6,7 @@ import { Bookshelf } from '@/features/bookshelf';
 
 export default function Home() {
   const posts = getAllPosts();
-
+  console.log('asd');
   return (
     <div className="space-y-0">
       <HeroSection />
