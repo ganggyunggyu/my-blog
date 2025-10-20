@@ -28,7 +28,7 @@ export function ThemeToggle() {
   return (
     <button
       onClick={handleToggle}
-      className="vintage-button text-sm relative overflow-hidden"
+      className="relative overflow-hidden"
       aria-label="Toggle theme"
       title={theme === "dark" ? "Light Mode" : "Dark Mode"}
     >
@@ -37,7 +37,11 @@ export function ThemeToggle() {
           isAnimating ? 'rotate-180 scale-0' : 'rotate-0 scale-100'
         }`}
       >
-        {theme === "dark" ? <HiSun className="text-base" /> : <HiMoon className="text-base" />}
+        {theme === "dark" ? (
+          <HiSun className="w-6 h-6 text-[var(--accent)]" />
+        ) : (
+          <HiMoon className="w-6 h-6 text-[var(--accent)]" />
+        )}
       </span>
     </button>
   );
