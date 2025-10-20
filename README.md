@@ -2,6 +2,8 @@
 
 > 강경규 기술 블로그
 
+- https://vercel.com/ganggyunggyus-projects
+
 ## 🚀 Tech Stack
 
 - **Framework**: Next.js 15 (App Router)
