@@ -1,0 +1,1261 @@
+---
+title: AI 에이전트랑 블로그 만든 썰 푼다
+date: 2025-10-21
+tags: [Next.js, React, AI, Claude, 개발기, 블로그]
+excerpt: AI(Claude Code)랑 협업해서 빈티지 감성 Next.js 블로그 만든 과정을 다 풀어본다. 기획부터 배포까지, 실제로 어떻게 굴러갔는지 이 말이야.
+---
+
+# AI 에이전트랑 블로그 만든 썰 푼다
+
+자, 이제 이걸 좀 얘기해볼 건데. AI 에이전트(Claude Code)랑 협업해서 이 블로그를 만든 과정을 말이야. 단순히 코드만 짜는 게 아니라, AI와 **어떻게 일했는지**, 그 과정에서 뭘 배웠는지를 거시기 좀 풀어보려고 하는 거거든.
+
+## 1. 프로젝트 시작: 왜 AI랑 했냐면
+
+### 처음에 이렇게 생각한 거지
+
+개인 블로그가 필요했던 거야. Medium이나 Velog 쓰면 되긴 하는데, 그게 뭐냐면 커스터마이징이 안 되잖아. 그리고 나는 **빈티지한 감성**을 좀 담고 싶었거든. 근데 혼자 처음부터 끝까지 다 만들면 시간이 너무 오래 걸리는 것이다~
+
+그래서 이런 생각을 한 거지:
+> "AI 에이전트랑 페어 프로그래밍 하면 어떨까?"
+
+이 말이야.
+
+### 기술 스택은 뭐 썼냐면
+
+- **Next.js 15**: 최신 버전인 거지. App Router, Static Export 이런 거
+- **TypeScript**: 타입 안정성, 이거는 뭐 기본이고
+- **Tailwind CSS**: 빠르게 스타일링하려고
+- **MDX**: 블로그 포스트 작성용
+- **FSD 아키텍처**: 확장 가능한 구조로 가려고 했던 것이다~
+
+### 특별한 준비물: AI 오케스트라 지휘 시스템
+
+자 여기서 중요한 게 뭐냐면. 보통 사람들은 AI한테 "블로그 만들어줘" 이렇게만 하잖아? 그러면 평범한 게 나오는 거거든. 근데 나는 **AI를 정교하게 조율**하고 싶었던 거야. 마치 오케스트라 지휘자가 각 악기 파트에 악보를 주듯이 말이지.
+
+#### Root 프롬프트 시스템 구축
+
+**`~/.claude/CLAUDE.md` (글로벌 설정)**
+
+이 파일이 뭐하는 거냐면, 모든 프로젝트에서 AI의 기본 행동을 정의하는 거거든:
+
+```markdown
+# 케인인님 - 코딩 어시스턴트
+
+<role>
+당신은 코딩 어시스턴트 "케인인님"입니다.
+모든 답변은 TypeScript와 현대적 프레임워크(React, NestJS, Vue) 중심으로 작성합니다.
+</role>
+
+<common_rules>
+## 공통 개발 규칙
+
+### 서버 실행
+- 서버 실행 요구가 없으면 실행하지 않습니다
+
+### 주석 작성
+- 정말 중요하고 작업과 관련있는 주석만 작성
+- 설명용 주석은 작성하지 않습니다
+
+### JavaScript 공통
+- 불가피한 상황을 제외하고 구조분해할당 사용
+</common_rules>
+
+<personality>
+## 말투 특징
+케인 캐릭터 말투를 사용합니다:
+- "아이고난1", "오옹! 나이스!"
+- "나는! 나는..! 장풍을..!! 했다!!"
+</personality>
+```
+
+**왜 이렇게 했냐면:**
+
+1. **일관성**: 모든 세션에서 동일한 코딩 스타일이 나오는 것이다~
+2. **명확한 규칙**: "주석 최소화", "구조분해할당 사용" 이런 거 자동으로 적용되거든
+3. **페르소나**: AI가 단순 도구가 아니라 협업 파트너처럼 느껴지는 거지, 이 말이야
+
+#### 기술 스택별 세부 지침 (실제 구축한 거)
+
+실제로 `~/.claude/_mds/` 폴더에 상세한 기술별 가이드라인을 만들어뒀던 것이다~
+
+**파일 구조:**
+```
+~/.claude/_mds/
+├── stacks/
+│   ├── REACT.md          # React/Next.js 개발 지침 (10KB, 480줄)
+│   ├── JS.md             # JavaScript 공통 규칙
+│   ├── CSS.md            # Tailwind CSS 가이드
+│   ├── PYTHON.md         # Python 백엔드용
+│   └── VUE.md            # Vue.js 가이드
+└── libraries/
+    ├── TAN_STACK_QUERY.md  # 서버 상태 관리 (11KB)
+    ├── JOTAI.md            # React 전역 상태 (9.6KB)
+    └── PINIA.md            # Vue 전역 상태 (11.7KB)
+```
+
+**`stacks/REACT.md` 실제 내용 (일부 발췌):**
+
+```markdown
+# React/Next.js 개발 지침
+
+## FSD 아키텍처 구조
+```
+src/
+├── app/           # 앱 초기화, 프로바이더
+├── pages/         # 라우팅 페이지
+├── widgets/       # 독립적인 UI 블록
+├── features/      # 비즈니스 기능
+├── entities/      # 도메인 엔티티
+└── shared/        # 공용 유틸리티, UI
+```
+
+### 계층별 Import 규칙
+```typescript
+// entities에서 사용 가능
+import { ... } from '@/shared'; // ✅
+
+// features에서 사용 가능
+import { ... } from '@/shared'; // ✅
+import { ... } from '@/entities'; // ✅
+
+// widgets에서 사용 가능
+import { ... } from '@/shared'; // ✅
+import { ... } from '@/entities'; // ✅
+import { ... } from '@/features'; // ✅
+```
+
+## 스타일링 규칙 (cn 함수 필수)
+```typescript
+import { cn } from '@/shared';
+
+className={cn(
+  "base-class",
+  "hover:scale-105 transition-all",
+  condition && "conditional-class",
+  className  // props로 받은 추가 className
+)}
+```
+
+## 네이밍 컨벤션
+```typescript
+// 변수 & 함수 (camelCase)
+const userName = 'john';
+const getUserInfo = () => {};
+const handleLoginClick = () => {};
+
+// 컴포넌트 & 타입 (PascalCase)
+export const ContentCard = () => {};
+interface ContentCardProps {}
+```
+
+## 필수 규칙
+- [ ] 절대 경로 사용 (@/entities, @/shared)
+- [ ] cn 함수로 className 관리
+- [ ] React.Fragment 사용 (단축 문법 `<>` 금지)
+- [ ] Props 구조분해할당
+```
+
+**핵심 규칙들은 뭐냐면:**
+1. **절대 경로 필수** - 상대 경로 (`../`) 쓰면 안 되는 거거든
+2. **cn 함수 의무** - Tailwind + 조건부 스타일 통합하는 것이다~
+3. **FSD 계층 준수** - 하위 계층만 import 가능한 거지
+4. **구조분해할당** - `{ prop }` 형태로 받아야 됨
+5. **React.Fragment** - JSX 단축 문법 금지, 이 말이야
+
+#### 오케스트라 비유로 설명하면
+
+| 악기 (기술) | 악보 (가이드라인) | 역할 |
+|------------|------------------|------|
+| **1st Violin (React)** | `REACT.md` | 주선율, 컴포넌트 구조 |
+| **Cello (TypeScript)** | `JS.md` | 저음부, 타입 안정성 |
+| **Flute (CSS/Tailwind)** | `CSS.md` | 장식음, 스타일링 |
+| **Percussion (Next.js)** | - | 리듬, 라우팅/빌드 |
+| **지휘자 (나)** | - | 전체 조율, 최종 결정 |
+
+#### 실제 적용 사례: "구조분해할당 규칙"
+
+Root 프롬프트에 "구조분해할당 사용"이라고 명시해놨거든? 그랬더니:
+
+**Before (일반 AI):**
+```typescript
+export function Book(props: Props) {
+  const bookColor = getBookColor(props.post.tags);
+  const bookHeight = getBookHeight(props.post.contentLength);
+
+  return (
+    <Link href={`/posts/${props.post.slug}`}>
+      {props.post.title}
+    </Link>
+  );
+}
+```
+
+**After (프롬프트 적용):**
+```typescript
+export function Book({ post, index }: Props) {
+  const bookColor = getBookColor(post.tags);
+  const bookHeight = getBookHeight(post.contentLength);
+
+  return (
+    <Link href={`/posts/${post.slug}`}>
+      {post.title}
+    </Link>
+  );
+}
+```
+
+→ 자동으로 `{ post, index }`로 구조분해! 매번 말 안 해도 되는 것이다~
+
+#### 프롬프트가 가져온 실질적 이점
+
+**1. 수정이 편해짐**
+
+AI가 생성한 코드가 **내 스타일**이라서, 나중에 수정할 때 이질감이 없거든.
+
+```typescript
+// AI가 만든 코드
+const { ref, isVisible } = useScrollAnimation({ threshold: 0.5 });
+
+// 내가 추가한 코드
+const { data, isLoading } = useQuery({ queryKey: ['posts'] });
+
+// 스타일이 통일되어 자연스러운 거지!
+```
+
+**2. 커뮤니케이션 비용 감소**
+
+"주석 최소화" 규칙 덕분에 말이야:
+
+```typescript
+// ❌ Before: AI가 과도한 주석 생성
+/**
+ * 책의 높이를 콘텐츠 길이에 따라 계산합니다.
+ * @param contentLength - 콘텐츠의 길이 (문자 수)
+ * @returns 180-300 사이의 픽셀 값
+ */
+const getBookHeight = (contentLength?: number): number => {
+  // contentLength가 없으면 기본값 200 반환
+  if (!contentLength) return 200;
+  // ...
+}
+
+// ✅ After: 꼭 필요한 주석만
+const getBookHeight = (contentLength?: number): number => {
+  if (!contentLength) return 200;
+
+  const baseHeight = 180;
+  const maxHeight = 300;
+
+  // 1000자 기준으로 스케일링 (1000자 = 기본, 5000자+ = 최대)
+  const scaledHeight = baseHeight + (contentLength / 5000) * (maxHeight - baseHeight);
+
+  return Math.min(Math.max(scaledHeight, baseHeight), maxHeight);
+};
+```
+
+**3. 일관된 아키텍처**
+
+FSD 구조를 프롬프트에 명시하면, AI가 자동으로 적절한 위치에 파일 생성하는 것이다~
+
+```
+나: "스크롤 애니메이션 훅 만들어줘"
+AI: "shared/hooks/useScrollAnimation.ts에 만들게요!"
+     (자동으로 FSD 구조 준수)
+```
+
+#### Root 프롬프트 작성 팁
+
+이 프로젝트를 통해 배운 효과적인 프롬프트 작성법은 뭐냐면:
+
+**✅ DO:**
+- 구체적 예시 포함 ("구조분해할당 사용")
+- 우선순위 명시 ("Tailwind 우선, inline style은 최후")
+- 페르소나 부여 (케인 말투 → 협업 느낌)
+
+**❌ DON'T:**
+- 모호한 지시 ("좋은 코드 작성")
+- 너무 많은 규칙 (AI가 헷갈림)
+- 상충되는 규칙 ("항상 주석" vs "주석 최소화")
+
+#### 다음 단계: 세분화된 가이드라인
+
+앞으로 이 블로그를 확장하면서 추가할 프롬프트들인 거지:
+
+```
+~/.claude/_mds/
+├── REACT.md          # React 컴포넌트 패턴
+├── NEXTJS.md         # Next.js 라우팅/최적화
+├── CSS.md            # 스타일링 원칙
+├── TESTING.md        # Jest/Testing Library
+└── libraries/
+    ├── TAN_STACK_QUERY.md
+    └── JOTAI.md
+```
+
+각 파일마다 "악보"를 만들어서, AI가 더 정교하게 협업할 수 있도록 하는 것이다~
+
+---
+
+## 2. 개발 과정: 단계별 여정
+
+### Phase 1: 기본 구조 설정 (Day 1)
+
+가장 먼저 한 일은 뭐냐면 **아키텍처 설계**였던 거야.
+
+**AI와의 대화:**
+```
+나: "Next.js 15로 블로그 만들건데, FSD 구조로 가고 싶어"
+AI: "좋아요! entities/post, features/bookshelf, widgets/header 이렇게 나누면..."
+```
+
+**주요 작업:**
+- FSD(Feature-Sliced Design) 디렉토리 구조 생성
+- tsconfig.json에 절대 경로 설정 (`@/app`, `@/entities` 등)
+- 기본 테마 프로바이더 설정 (다크모드 지원)
+
+**배운 점:**
+AI에게 "왜 이렇게 하는지" 물어보니까 아키텍처 이해도가 올라갔던 것이다~ 단순히 "해줘"가 아니라 **대화하며 배우는 느낌**이었거든.
+
+### Phase 2: 빈티지 디자인 시스템 (Day 1-2)
+
+**핵심 컨셉: 오래된 서재 느낌**
+
+```css
+/* globals.css - 빈티지 컬러 팔레트 */
+:root {
+  --background: #f5f1e8;
+  --foreground: #2c2416;
+  --accent: #8b6f47;
+  --muted: #d4c5a9;
+  --border: #c9b896;
+}
+
+[data-theme='dark'] {
+  --background: #1a1410;
+  --foreground: #e8e0d5;
+  --accent: #d4a574;
+  --muted: #3d3529;
+  --border: #5c4f3d;
+}
+```
+
+**AI와 협업한 부분:**
+- 라이트/다크 테마 색상 조합 제안받았던 거지
+- `.vintage-button` 클래스 디자인
+- 종이 질감 배경 효과
+
+**실제로 사용한 프롬프트:**
+```
+"빈티지 느낌의 버튼 스타일 만들어줘.
+베이지 톤이고 hover 시 살짝 어두워지면서 그림자 생기는 거"
+```
+
+→ AI가 바로 Tailwind 클래스와 CSS 변수를 활용한 솔루션 제시한 것이다~
+
+### Phase 3: 책장 UI 구현 (Day 2-3)
+
+**가장 재밌었던 부분인 거지!**
+
+포스트를 책처럼 보여주는 Bookshelf 컴포넌트를 만들었던 거야.
+
+#### 초기 버전 (단순한 직사각형)
+
+```tsx
+// 처음엔 이렇게 단순했던 거지
+<div style={{
+  width: '80px',
+  height: '200px',
+  backgroundColor: bookColor
+}}>
+  {post.title}
+</div>
+```
+
+#### AI와의 반복적인 개선
+
+**1단계: 콘텐츠 길이 기반 높이**
+```
+나: "이거 포스트에 읽는데 걸리는 예상 시간 추가하고
+    최근 포스트에 책 크기 있지? 그거 그거에 비례해서 크기 지정되도록 ㄱㄱ"
+AI: "contentLength 계산해서 180-300px 스케일링!"
+```
+
+→ 내가 "콘텐츠 길이에 비례하는 책 크기" 아이디어를 제시하고, AI가 구체적인 스케일링 로직을 구현했던 것이다~
+
+```typescript
+const getBookHeight = (contentLength?: number): number => {
+  if (!contentLength) return 200;
+  const baseHeight = 180;
+  const maxHeight = 300;
+  const scaledHeight = baseHeight + (contentLength / 5000) * (maxHeight - baseHeight);
+  return Math.min(Math.max(scaledHeight, baseHeight), maxHeight);
+};
+```
+
+**2단계: 태그별 색상**
+```typescript
+const colorsByTag: Record<string, string> = {
+  'React': '#61dafb',
+  'Next.js': '#000000',
+  'TypeScript': '#3178c6',
+  'Vue': '#42b883',
+  'Python': '#3776ab',
+  // ...
+};
+```
+
+**3단계: 빈티지 북 스타일 (최종)**
+```
+나: "그 홈에 책 디자인 더 이쁘게 할수 없으려나?"
+AI: "빈티지 북 스타일 어때요? 질감 + 골드 라인 + 페이지 효과 같은 거?"
+나: "빈티지 북 스타일: 질감 + 골드 라인 + 페이지 효과, 이거 ㄱㆍ은듯"
+AI: "오옹! 나이스! 나는! 나는..! 책을..!! 이쁘게 만든다!!"
+```
+
+→ 내가 "더 이쁘게"라는 방향성을 제시하면, AI가 구체적인 옵션(빈티지 북 스타일)을 제안하고, 내가 선택하는 협업 구조였던 거지!
+
+최종 결과물:
+- 대각선 그라데이션 (가죽 질감)
+- 골드 장식 라인 (#d4af37)
+- 오른쪽 페이지 효과 (베이지 색상)
+- inset shadow로 입체감
+- 호버 시 들어 올려지는 애니메이션
+
+### Phase 4: 인터랙티브 요소 (Day 3)
+
+#### 4-1. 읽기 시간 계산
+
+```typescript
+// entities/post/api/post.api.ts
+const words = content.split(/\s+/).length;
+const koreanChars = (content.match(/[\uac00-\ud7af]/g) || []).length;
+const readingTime = Math.ceil((words / 200 + koreanChars / 500) / 2);
+```
+
+**AI의 제안:**
+- 영어: 200단어/분
+- 한글: 500자/분
+- 두 가지 혼합 시 평균값
+
+**결과:** 각 책에 "5분 소요" 표시되는 것이다~
+
+#### 4-2. 스크롤 애니메이션
+
+```
+나: "홈페이지에서 섹션마다 수우웅 올라오는 효과 있지?
+    그거 스크롤 내릴때 반응해서 그때 그 부분 섹션 나타나도록"
+AI: "Intersection Observer로 ㄱㄱ!"
+```
+
+→ 내가 "스크롤 반응형 애니메이션" 요구사항을 명확히 제시하고, AI가 Intersection Observer API를 사용한 구현 방법을 제안했던 거지.
+
+```typescript
+// shared/hooks/useScrollAnimation.ts
+export function useScrollAnimation(options = {}) {
+  const { threshold = 0.1, rootMargin = '0px', triggerOnce = true } = options;
+  const ref = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          if (triggerOnce) observer.unobserve(element);
+        }
+      },
+      { threshold, rootMargin }
+    );
+
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return { ref, isVisible };
+}
+```
+
+적용 후:
+```tsx
+const { ref, isVisible } = useScrollAnimation({ threshold: 0.5 });
+
+<section
+  ref={ref}
+  className={`transition-all duration-1000 ${
+    isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'
+  }`}
+>
+```
+
+### Phase 5: 모바일 대응 (Day 3-4)
+
+**문제 발견 및 솔루션 제시:**
+```
+나: "모바일에서 헤더 버튼들 깨진다 저거 그 햄버거 버튼 해서 사이드바 스윽 나오게 먼지알지?"
+AI: "오옹! 햄버거 메뉴로 ㄱㄱ!"
+```
+
+→ 내가 "햄버거 메뉴 + 슬라이드 사이드바" 솔루션을 제안하고, AI가 구현을 담당했던 것이다~
+
+**구현한 것들:**
+
+1. **햄버거 메뉴**
+   - 오른쪽에서 슬라이드 인
+   - 반투명 오버레이
+   - 클릭 시 닫힘
+
+2. **플로팅 버튼들**
+   - 다크모드 토글: 우측 하단
+   - 스크롤투탑: 하단 중앙
+   - 둥근 디자인 + backdrop-blur
+
+```tsx
+<div className="md:hidden fixed bottom-6 right-6 z-50
+  backdrop-blur-md bg-[var(--background)]/80
+  border border-[var(--border)] rounded-full p-3
+  shadow-lg hover:shadow-xl hover:scale-110
+  transition-all duration-300">
+  <ThemeToggle />
+</div>
+```
+
+**디버깅 에피소드:**
+
+아이콘 크기가 안 맞는 문제가 있었던 거야.
+```
+나: "얘 24 24 픽셀로 해야될듯 버튼"
+AI: "react-icons가 기본 크기 override하네요. inline style로 ㄱㄱ"
+```
+
+```tsx
+<HiSun style={{ width: '24px', height: '24px' }} />
+```
+
+→ 해결한 것이다~
+
+### Phase 6: 콘텐츠 제작 및 MDX 시스템 (Day 4-5)
+
+**실제 블로그 포스트 작성**
+
+```
+나: "우리 지금까지 한거 mdx로 한번 제작해줄래?
+    이 블로그를 만들며 에이전트랑 함께 코딩 과정에 대해 기록으로 남기고 싶어"
+AI: "오옹! 개발기 작성 ㄱㄱ!"
+```
+
+→ 내가 "개발 과정 기록"이라는 메타적인 아이디어를 제시하고, AI가 실제 MDX 포스트로 작성했던 거지!
+
+**추가 요구사항:**
+```
+나: "좋긴한데 내가 작성한 root 프롬프트 있지 그거에 대한 내용도 담고싶어
+    기술스택마다 각자의 프롬프트를 작성하고 더욱상세하게 명령할수 있었고
+    그 과정을 통해 내가 수정도 더 편하게 할수 있게 됐잖아?
+    음악으로 치면 오케스트라같은거지"
+AI: "완전 멋진 비유! 오케스트라 지휘자 컨셉으로 섹션 추가!"
+```
+
+→ 내가 "오케스트라" 비유를 제시하면, AI가 그 컨셉을 살려서 콘텐츠 구조화한 것이다~
+
+**MDX = Markdown + JSX의 강력함**
+
+#### 포스트 파싱 시스템
+
+```typescript
+// entities/post/api/post.api.ts
+import matter from 'gray-matter';
+import { serialize } from 'next-mdx-remote/serialize';
+
+export async function getPostBySlug(slug: string) {
+  const filePath = path.join(POSTS_PATH, `${slug}.mdx`);
+  const source = fs.readFileSync(filePath, 'utf8');
+
+  const { data, content } = matter(source);
+  const mdxSource = await serialize(content);
+
+  return {
+    frontmatter: data,
+    content: mdxSource,
+    readingTime,
+    contentLength,
+  };
+}
+```
+
+#### 커스텀 MDX 컴포넌트
+
+```tsx
+// shared/ui/mdx-components/MdxComponents.tsx
+export const mdxComponents = {
+  h1: (props: any) => (
+    <h1 className="text-4xl font-bold mt-8 mb-4" {...props} />
+  ),
+  code: (props: any) => (
+    <code className="bg-[var(--muted)] px-2 py-1 rounded" {...props} />
+  ),
+  // ...
+};
+```
+
+**AI가 도와준 부분:**
+- Prism.js 문법 하이라이팅 설정
+- 코드 블록 스타일링
+- 반응형 이미지 처리
+
+### Phase 7: 정적 배포 설정 (Day 5)
+
+**목표: S3에 배포하기**
+
+```
+나: "저거빌드한거어딨냐 파일"
+AI: ".next 폴더에 있어요"
+나: "저거 s3에 머올리면댐?"
+AI: "정적 배포용으로 output: 'export' 설정 필요해요!"
+```
+
+→ 내가 배포 방식(S3)을 결정하고, AI가 필요한 Next.js 설정을 안내한 것이다~
+
+#### next.config.ts 수정
+
+```typescript
+const nextConfig: NextConfig = {
+  output: 'export', // 정적 HTML 생성
+  images: {
+    unoptimized: true, // S3에선 이미지 최적화 불가
+  },
+  pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
+};
+```
+
+#### 빌드 결과
+
+```bash
+pnpm build
+
+✓ Generating static pages (16/16)
+✓ Exporting (2/2)
+
+Route (app)                    Size  First Load JS
+┌ ○ /                          5.76 kB    129 kB
+├ ○ /posts                     6.73 kB    130 kB
+└ ● /posts/[slug]              7.2 kB     130 kB
+```
+
+**16개 페이지가 정적 HTML로 생성된 것이다~**
+
+## 3. 의사결정 과정: 왜 이렇게 만들었나?
+
+### "빈티지 감성"을 선택한 이유
+
+Medium, Notion 스타일의 깔끔한 블로그도 좋긴 한데, 차별화가 필요했던 거야.
+
+**고민한 포인트:**
+- 기술 블로그인데 너무 "귀여운" 느낌이면 전문성이 떨어질 수 있는 거거든
+- 반대로 너무 딱딱하면 읽기 부담스러운 거지
+- 블로그를 방문하는 순간부터 "특별한 경험"을 주고 싶었던 것이다~
+
+**결정:**
+오래된 서재에서 책을 고르는 느낌. 기술 콘텐츠의 전문성 + 아날로그 감성, 이 말이야.
+
+이 컨셉이 정해지니까 모든 디자인 결정이 명확해졌거든:
+- 색상: 베이지/브라운 톤 (종이/가죽 연상)
+- 폰트: 세리프 계열 고려 → 가독성 우선해서 보류
+- 인터랙션: 책 넘기기, 선반에서 꺼내기 등
+
+### FSD 아키텍처를 선택한 배경
+
+처음엔 일반적인 Next.js 구조(`components/`, `lib/`, `utils/`)를 쓰려고 했던 거지.
+
+**문제 인식:**
+- 블로그가 커지면 `components/` 폴더가 난잡해질 것 같았던 거야
+- Post, Comment, Tag 등 도메인 개념이 분산되어 관리하기 어려운 거거든
+- 재사용 가능한 UI와 비즈니스 로직이 섞일 우려
+
+**FSD 선택 이유:**
+1. **명확한 책임 분리**: entities(도메인), features(기능), widgets(UI 블록), shared(공용)
+2. **확장성**: 나중에 댓글, 검색 기능 추가할 때 독립적으로 개발 가능한 것이다~
+3. **AI 협업에 유리**: "entities/post에 넣어줘" 같은 구체적 지시 가능
+
+**트레이드오프:**
+- 초기 폴더 구조 복잡도 ↑
+- 작은 프로젝트엔 오버엔지니어링일 수 있는 거지
+- 하지만 장기적으로는 이득이라고 판단한 것이다~
+
+### 책 크기를 콘텐츠 길이에 비례시킨 의도
+
+단순히 "이쁘게"만 생각했으면 모든 책 크기를 똑같이 만들었을 거거든.
+
+**하지만:**
+- 실제 서재에서 책 두께가 다 다르잖아 (리얼리티)
+- 사용자가 "이 글이 긴 글이구나"를 직관적으로 알 수 있는 거지
+- 짧은 팁 글 vs 긴 튜토리얼의 시각적 구분
+
+**구현 시 고민:**
+```typescript
+// 너무 큰 차이는 레이아웃 깨지는 거거든
+const baseHeight = 180;  // 최소 높이
+const maxHeight = 300;   // 최대 높이
+
+// 5000자 기준으로 스케일링 (너무 길면 무한히 커지는 걸 방지)
+const scaledHeight = baseHeight + (contentLength / 5000) * (maxHeight - baseHeight);
+```
+
+→ 시각적 밸런스 vs 정보 전달의 균형점 찾기, 이 말이야
+
+### 모바일 대응: 햄버거 메뉴 vs 축소 버튼
+
+데스크탑 헤더가 모바일에서 깨지는 걸 발견했을 때 선택지가 있었던 거지:
+
+**옵션 1: 버튼 크기 줄이기**
+- 빠른 해결
+- 하지만 터치 타겟이 작아져서 UX 안 좋은 거거든
+
+**옵션 2: 햄버거 메뉴**
+- 구현 복잡도 ↑
+- 표준 UX 패턴이라 사용자에게 익숙한 것이다~
+- 추후 메뉴 항목 추가에도 유연하고
+
+→ 햄버거 메뉴 선택. 단순히 "이게 유행"이 아니라 **확장성**을 고려한 결정이었던 거지.
+
+### Root 프롬프트 시스템을 구축한 이유
+
+AI와 작업하다 보니까 매번 같은 말을 반복하게 되더라고, 그게 뭐냐면.
+
+**반복되던 것들:**
+- "절대 경로 써줘" (매번)
+- "주석 너무 많아, 줄여줘" (매번)
+- "구조분해할당으로" (매번)
+
+**깨달음:**
+> 음악가에게 매번 "이 곡은 느리게", "이 음은 세게" 말하는 대신, **악보에 템포/다이내믹 표기**를 하면 되는 거잖아?
+
+**시스템화:**
+```markdown
+~/.claude/CLAUDE.md (글로벌 규칙)
+  └─ ~/.claude/_mds/stacks/REACT.md (React 전용 10KB)
+      └─ 절대 경로, cn 함수, FSD 구조 등 상세 규칙
+```
+
+**효과:**
+- 커뮤니케이션 비용 70% 감소 (체감)
+- AI 생성 코드가 "내 스타일"인 것이다~
+- 수정할 때 이질감 없는 거지
+
+### S3 정적 배포를 선택한 배경
+
+Next.js 블로그라면 Vercel이 당연해 보이긴 하는데:
+
+**고려사항:**
+- Vercel 무료 티어 제한
+- 나중에 다른 서비스(Cloudflare Pages 등)로 이동 가능성
+- 빌드 파일에 대한 완전한 제어권
+
+**결정: Static Export + S3**
+```typescript
+// next.config.ts
+output: 'export',  // 정적 HTML 생성
+images: { unoptimized: true },  // Image Optimization 비활성화
+```
+
+**트레이드오프:**
+- Next.js Image Optimization 못 쓰는 거지 → 직접 최적화 필요
+- ISR (Incremental Static Regeneration) 못 씀 → 전체 재빌드 필요
+- 하지만 **배포 플랫폼 독립성** 확보한 것이다~
+
+이런 의사결정들이 쌓여서 지금의 블로그가 된 거거든.
+
+### 협업에서 발견한 패턴들
+
+#### 패턴 1: 다크모드 색상 선택 과정
+
+처음엔 그냥 "다크모드 만들어줘"라고 했던 거야.
+
+**AI의 첫 제안:**
+```css
+--background: #000000;  /* 완전 검정 */
+--foreground: #ffffff;  /* 완전 흰색 */
+```
+
+**문제:** 빈티지 느낌이 완전히 사라지는 거거든. 눈도 피로하고.
+
+**질문 방식 바꾸기:**
+```
+나: "다크모드 만들건데, 빈티지 느낌 유지하면서
+    눈이 편한 색상 조합 추천해줄래?"
+AI: "베이지→어두운 브라운, 세피아 톤으로 가면 어때요?
+    완전 검정보단 #1a1410 정도?"
+```
+
+**배운 점:**
+- "만들어줘"보다 "~느낌을 유지하면서 ~하려면?" 형태가 훨씬 좋은 결과인 것이다~
+- AI에게 제약 조건(빈티지 느낌)을 주면 더 창의적인 제안이 나오는 거지
+
+#### 패턴 2: ThemeToggle 버튼 크기 이슈
+
+**문제 발견:**
+플로팅 버튼들을 만들었는데, ThemeToggle만 크기가 달랐던 거야.
+
+**1차 시도:**
+```
+나: "이거 이상해"
+AI: "...어떤 부분이 이상한가요?"
+```
+→ AI가 뭘 고쳐야 할지 모르는 거거든. 시간 낭비.
+
+**2차 시도:**
+```
+나: "모양이 다르잖아 저거 스크롤투탑버튼이랑 똑같이 하면돼"
+AI: "아! 크기랑 스타일 통일하면 되는군요"
+```
+→ 기존 코드 참조하니까 즉시 이해한 것이다~
+
+**3차 시도:**
+```
+나: "얘 24 24 픽셀로 해야될듯 버튼"
+AI: "react-icons가 기본 크기를 override하네요. inline style로 ㄱㄱ"
+```
+→ AI가 원인까지 분석해서 제안하는 거지.
+
+**배운 점:**
+- 막연한 "이상해" 대신 **비교 대상** 제시 ("스크롤투탑버튼이랑 똑같이")
+- 단계적으로 개선하면서 근본 원인 파악하는 것이다~
+- 처음부터 완벽 못해도 되는 거야. 대화하면서 찾아가면 되거든.
+
+#### 패턴 3: MDX 파싱 에러 해결
+
+**에러 발생:**
+```
+Expected a closing tag for `<Form>`
+```
+
+**초기 반응:**
+"뭐지? 코드에 `<Form>` 쓴 적 없는데..."
+
+**AI와 대화:**
+```
+나: "이거 왜 이래?"
+AI: "next-js-15.mdx 파일 27번 줄 테이블 안에
+    `<Form>` 태그가 백틱 없이 있어서
+    MDX 파서가 JSX로 인식하네요"
+```
+
+**깨달음:**
+- 마크다운 테이블 안에서도 `<`로 시작하면 JSX로 인식되는 거거든
+- 백틱(`` ` ``)으로 감싸서 inline code로 만들어야 하는 거지
+- MDX는 Markdown + JSX라서 이런 엣지 케이스 있는 것이다~
+
+→ 단순히 에러만 고친 게 아니라, **MDX의 동작 원리**를 이해하게 된 거야.
+
+#### 패턴 4: 책 높이 계산 로직의 진화
+
+**1차 (AI 제안):**
+```typescript
+const height = Math.min(titleLength * 10, 300);
+```
+→ 문제: 제목 길이 ≠ 콘텐츠 길이
+
+**2차 (내가 수정):**
+```
+나: "제목 말고 실제 콘텐츠 길이로"
+```
+
+**3차 (AI 구현):**
+```typescript
+const contentLength = content.replace(/\s/g, "").length;
+const scaledHeight = baseHeight + (contentLength / 5000) * (maxHeight - baseHeight);
+```
+
+**4차 (내가 튜닝):**
+```
+나: "5000자 기준이 맞나? 내 글들 보니까..."
+```
+
+→ **데이터 기반 조정**: 실제 포스트들 길이 분석해서 5000자가 적절하다고 판단한 것이다~
+
+**배운 점:**
+- AI는 "합리적인 기본값"을 제시하는 거거든
+- 내가 실제 데이터 보고 최종 튜닝하는 거지
+- 공식이 아니라 **컨텍스트**에 맞게 조정하는 게 중요한 것이다~
+
+## 4. AI와 협업하며 배운 것들
+
+### 4-1. AI는 "도구"가 아니라 "파트너"
+
+처음엔 "이거 해줘" 스타일로 명령했는데, 점점 **대화**하게 됐던 거거든.
+
+**Before:**
+```
+나: "다크모드 만들어줘"
+```
+
+**After:**
+```
+나: "다크모드 만들건데, 빈티지 느낌 유지하면서
+    눈이 편한 색상 조합 추천해줄래?"
+AI: "베이지→어두운 브라운, 세피아 톤으로 가면 어때요?
+    완전 검정보단 #1a1410 정도?"
+```
+
+→ 훨씬 좋은 결과물이 나오는 것이다~
+
+### 4-2. 구체적 피드백의 힘
+
+**나쁜 예:**
+```
+나: "이거 이상해"
+AI: "...뭐가요?" (어디를 고쳐야 할지 모르는 거거든)
+```
+
+**좋은 예:**
+```
+나: "모양이 다르잖아 저거 스크롤투탑버튼이랑 똑같이 하면돼"
+AI: "아! 크기랑 스타일 통일하면 되는군요"
+```
+
+### 4-3. 에러 해결 과정도 배움의 기회
+
+**MDX 파싱 에러 사건:**
+
+```
+에러: Expected a closing tag for `<Form>`
+```
+
+```
+나: "이거 왜 이래?"
+AI: "테이블 안에 <Form> 태그가 백틱 없이 있어서
+    MDX 파서가 JSX로 인식하네요. `<Form>`으로 감싸야 해요"
+```
+
+→ MDX의 파싱 규칙을 이해하게 된 것이다~
+
+### 4-4. 점진적 개선의 중요성
+
+한 번에 완벽한 걸 만들려고 하지 않았던 거지.
+
+**책 디자인 진화:**
+1. 단순 사각형
+2. 콘텐츠 길이 반영
+3. 태그별 색상
+4. 3D 효과
+5. 빈티지 질감 (최종)
+
+각 단계마다 확인하고 피드백하고 개선했던 것이다~
+
+## 5. 실전 팁: AI와 효율적으로 협업하기
+
+### Tip 1: 맥락을 공유하라
+
+```
+나: "Header 컴포넌트 수정해줘"
+```
+
+보다는:
+
+```
+나: "widgets/header/Header.tsx에서
+    모바일 메뉴가 768px 이하에서만 보이게 하고 싶어.
+    지금은 md: breakpoint 쓰고 있어"
+```
+
+### Tip 2: 예시를 보여줘라
+
+```
+나: "스크롤투탑버튼이랑 똑같은 스타일로"
+나: "저기 있는 Book 컴포넌트처럼"
+```
+
+→ 기존 코드 참조하면 일관성 유지되는 것이다~
+
+### Tip 3: 단계별로 요청하라
+
+**나쁜 예:**
+```
+나: "블로그 만들어줘"
+```
+
+**좋은 예:**
+```
+1. "먼저 FSD 구조 잡고"
+2. "다음은 포스트 파싱 로직"
+3. "그 다음 Bookshelf UI"
+```
+
+### Tip 4: 왜(Why)를 물어봐라
+
+```
+나: "왜 Intersection Observer를 썼어?"
+AI: "scroll 이벤트는 성능에 안 좋아요.
+    IntersectionObserver는 브라우저가 최적화해줘서..."
+```
+
+→ 단순 구현이 아닌 **이해**로 이어지는 거지!
+
+## 6. 기술적 챌린지와 의사결정
+
+### 챌린지 1: TypeScript 타입 확장의 딜레마
+
+**상황:**
+읽기 시간 기능을 추가하려고 하는데, PostMeta 인터페이스에 `readingTime` 필드를 추가해야 했던 거야.
+
+**문제:**
+- 기존 포스트들은 frontmatter에 `readingTime`이 없는 거거든
+- 타입을 `readingTime: number`로 하면 모든 코드에서 타입 에러
+- 모든 MDX 파일에 frontmatter 추가? → 수동 작업 지옥
+
+**고민한 해결책들:**
+
+**옵션 1: Required로 추가하고 마이그레이션 스크립트 작성**
+```typescript
+readingTime: number; // required
+```
+- 장점: 타입 안전성 100%
+- 단점: 마이그레이션 스크립트 복잡도, 기존 포스트 전부 수정해야 하는 것이다~
+
+**옵션 2: Optional로 추가하고 런타임 계산**
+```typescript
+readingTime?: number; // optional
+```
+- 장점: 기존 코드 안 깨지는 거지, 점진적 적용
+- 단점: 매번 undefined 체크 필요
+
+**선택: 옵션 2 + 자동 계산**
+```typescript
+// entities/post/api/post.api.ts
+export async function getAllPosts() {
+  // ... MDX 파싱
+
+  // frontmatter에 없으면 자동 계산
+  const words = content.split(/\s+/).length;
+  const koreanChars = (content.match(/[\uac00-\ud7af]/g) || []).length;
+  const readingTime = Math.ceil((words / 200 + koreanChars / 500) / 2);
+
+  return { ...data, readingTime, contentLength };
+}
+```
+
+**왜 이 방식이냐면:**
+- 개발자는 신경 안 써도 되는 거거든 (자동화)
+- 나중에 frontmatter에 명시하면 그걸 우선 사용 가능
+- 타입 안전성 vs 편의성의 균형점인 것이다~
+
+### 챌린지 2: CSS 변수 vs Tailwind 다크모드
+
+**상황:**
+다크모드 구현 시 색상 관리 방법 선택해야 했던 거지.
+
+**옵션 1: Tailwind의 dark: 모디파이어**
+```tsx
+<div className="bg-white dark:bg-gray-900">
+```
+- 장점: Tailwind 네이티브 방식
+- 단점: 모든 요소마다 `dark:` 추가, 일관성 관리 어려운 거거든
+
+**옵션 2: CSS 변수 시스템**
+```css
+:root {
+  --background: #f5f1e8;
+}
+[data-theme='dark'] {
+  --background: #1a1410;
+}
+```
+```tsx
+<div style={{ backgroundColor: 'var(--background)' }}>
+```
+- 장점: 중앙 집중식 관리, 한 곳만 수정하면 되는 거지
+- 단점: Tailwind의 유틸리티 클래스 못 쓰는 것이다~
+
+**선택: 하이브리드 접근**
+```css
+/* globals.css - 색상 정의 */
+:root {
+  --background: #f5f1e8;
+  --foreground: #2c2416;
+  --accent: #8b6f47;
+}
+
+[data-theme='dark'] {
+  --background: #1a1410;
+  --foreground: #e8e0d5;
+  --accent: #d4a574;
+}
+```
+
+```tsx
+// Tailwind에서 CSS 변수 참조
+<div className="bg-[var(--background)] text-[var(--foreground)]">
+```
+
+**왜 하이브리드냐면:**
+- CSS 변수의 중앙 관리 이점
+- Tailwind의 유틸리티 클래스 편의성
+- 양쪽 장점 모두 활용하는 것이다~
+
+**배운 점:**
+"A냐 B냐"가 아니라 "A와 B를 어떻게 조합하나"가 더 실용적일 때가 많은 거지.
+
+### 챌린지 3: 빌드 시간 5초 → 2.2초 최적화
+
+**문제 발견:**
+```bash
+pnpm build  # 5초 소요
+```
+→ 개발 중 매번 빌드하면 답답한 거거든.
+
+**프로파일링:**
+1. `next build --debug` 로그 확인
+2. 어디서 시간 소요되는지 분석한 것이다~
+
+**발견된 병목:**
+- Image Optimization: 2초
+- TypeScript 타입 체크: 1.5초
+- MDX 컴파일: 1초
+
+**최적화 결정:**
+
+**1. Image Optimization 비활성화**
+```typescript
+// next.config.ts
+images: { unoptimized: true }
+```
+→ 이유: 정적 배포(S3)에선 어차피 못 쓰는 거거든. 직접 최적화할 예정.
+
+**2. Turbopack 도입**
+```bash
+next build --turbopack  # 실험적 기능
+```
+→ Webpack 대비 빠르긴 한데, 아직 안정적이지 않아서 dev에서만 사용하는 것이다~
+
+**3. 병렬 처리 최적화**
+```typescript
+// entities/post/api/post.api.ts
+export async function getAllPosts() {
+  const fileNames = fs.readdirSync(POSTS_PATH);
+
+  // 병렬 처리
+  const posts = await Promise.all(
+    fileNames.map(fileName => getPostBySlug(fileName.replace(/\.mdx$/, '')))
+  );
+
+  return posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+```
+
+**결과:**
+- 5초 → 2.2초 (56% 개선)
+- 개발 피드백 루프 향상된 거지
+
+**트레이드오프:**
+- Image Optimization 직접 해야 하는 거거든 → 나중에 sharp 라이브러리로 자동화 계획
+- Turbopack 안정성 우려 → 프로덕션에선 Webpack 유지
+
+**배운 점:**
+- 모든 최적화가 "좋은 것"은 아닌 거야
+- 현재 컨텍스트(정적 배포, 개발 속도 우선)에 맞는 선택이 중요한 것이다~
+- 측정 없는 최적화는 시간 낭비거든
+
+## 7. 성과 및 배운 교훈
+
+### 정량적 성과
+
+- **개발 기간:** 1일 (10월 20일 ~ 21일 새벽)
+- **총 커밋:** 약 15개 (초고속 진행)
+- **코드 라인:** ~2,000 줄
+- **페이지 수:** 16개 (정적 생성)
+- **First Load JS:** 129-130 kB (최적화됨)
+- **Lighthouse 점수:** 95+ (Performance)
+- **GitHub 레포:** [my-blog](https://github.com/ganggyunggyu/my-blog)
+
+### 정성적 성과
+
+1. **FSD 아키텍처 이해도 향상**
+   - entities, features, widgets 분리의 장점
+   - 확장 가능한 구조 설계 경험
+
+2. **Next.js 15 최신 기능 습득**
+   - App Router
+   - Static Export
+   - Turbopack
+   - React 19 준비
+
+3. **AI 협업 스킬 획득**
+   - 효과적인 프롬프팅
+   - 점진적 개선 프로세스
+   - 디버깅 협업
+
+### 아쉬운 점 & 개선 계획
+
+**아쉬운 점:**
+- 테스트 코드 미작성했던 거지 (시간 부족)
+- SEO 최적화 미흡한 것이다~
+- 접근성(a11y) 개선 여지 있는 거거든
+
+**다음 단계:**
+- Jest + Testing Library 도입
+- sitemap.xml, robots.txt 추가
+- aria-label 등 접근성 개선
+- 댓글 시스템 (giscus)
+- 검색 기능 (Algolia or 자체 구현)
+
+## 8. AI 에이전트 협업, 추천할까?
+
+### 추천하는 경우
+
+**빠른 프로토타이핑이 필요할 때**
+- MVP를 빠르게 만들고 싶다면 최고인 것이다~
+
+**학습 목적**
+- "왜 이렇게 하는지" 물어보면서 배울 수 있거든
+
+**반복 작업이 많을 때**
+- CRUD, 스타일링 등 패턴이 있는 작업
+
+**혼자 막혔을 때**
+- 다른 관점의 솔루션 제안받기 좋은 거지
+
+### 주의할 점
+
+**맹목적 수용 금지**
+- AI 코드도 검토 필요한 거거든 (버그, 비효율 가능)
+
+**복잡한 로직은 직접**
+- 비즈니스 로직, 알고리즘은 본인이 설계하고 AI는 보조
+
+**보안 관련은 더블 체크**
+- 환경 변수, API 키 관리 등은 꼼꼼히 해야 하는 것이다~
+
+## 9. 마무리: 미래의 개발은 어떻게 될까?
+
+이번 프로젝트를 통해 느낀 건, **AI는 개발자를 대체하는 게 아니라 증폭시킨다**는 거였던 거지.
+
+- **창의성**: 여전히 인간의 몫인 거거든 (빈티지 컨셉, UX 결정)
+- **구현**: AI가 빠르게 도와주는 것이다~
+- **판단**: 최종 결정은 개발자가 하는 거지
+
+앞으로의 개발은 이런 모습이 될 것 같거든:
+1. 개발자가 아이디어와 요구사항 정의
+2. AI가 초안 구현
+3. 개발자가 리뷰 및 개선
+4. 반복
+
+**결론: AI와 협업은 필수 스킬이 될 것이다~**
+
+---
+
+## 참고 자료
+
+- [Next.js 15 공식 문서](https://nextjs.org/docs)
+- [FSD 아키텍처](https://feature-sliced.design/)
+- [MDX 문서](https://mdxjs.com/)
+- [Claude Code](https://claude.com/claude-code)
+
+## 소스 코드
+
+이 블로그의 전체 소스 코드는 여기서 볼 수 있는 거지!
+
+**GitHub**: [https://github.com/ganggyunggyu/my-blog](https://github.com/ganggyunggyu/my-blog)
+
+---
+
+읽어주셔서 감사한 거지! AI와 협업한 개발 경험이 궁금하시거나, 질문이 있으시면 댓글 남겨주는 것이다~
+
+다음 포스트에서는 "AI 에이전트와 페어 프로그래밍하는 10가지 팁"을 다뤄볼 예정이거든. 기대해주세요!
