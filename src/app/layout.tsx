@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/shared/ui/theme-provider";
 import { Header } from "@/widgets/header";
+import { ScrollToTop } from "@/shared/ui/scroll-to-top";
 
 export const metadata: Metadata = {
   title: "감겸규 개발 블로그",
@@ -23,6 +24,7 @@ export default function RootLayout({
           <main className="max-w-5xl mx-auto px-4 py-8">
             {children}
           </main>
+          <ScrollToTop />
         </ThemeProvider>
       </body>
     </html>
