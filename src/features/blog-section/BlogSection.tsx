@@ -1,6 +1,6 @@
 'use client';
 
-import { FaBlog } from "react-icons/fa";
+import { FaBlog } from 'react-icons/fa';
 
 interface BlogItem {
   name: string;
@@ -11,10 +11,22 @@ interface BlogItem {
 
 const blogs: BlogItem[] = [
   {
-    name: "Naver Blog",
-    url: "https://blog.naver.com/yournaverblog",
-    description: "개발 일상과 기록들",
-    color: "#03C75A",
+    name: 'Naver Blog',
+    url: 'https://blog.naver.com/ddo_ddi_appa',
+    description: '개발 일상과 기록들',
+    color: '#03C75A',
+  },
+  {
+    name: 'Naver Blog',
+    url: 'https://blog.naver.com/gnggnggyu_',
+    description: '개발 일상과 기록들',
+    color: '#03C75A',
+  },
+  {
+    name: 'Naver Blog',
+    url: 'https://blog.naver.com/mm__mm984',
+    description: '개발 일상과 기록들',
+    color: '#03C75A',
   },
 ];
 
@@ -34,13 +46,13 @@ export function BlogSection() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {blogs.map((blog, index) => (
             <a
-              key={blog.name}
+              key={blog.url}
               href={blog.url}
               target="_blank"
               rel="noopener noreferrer"
               className="group relative"
               style={{
-                animation: `fade-in-up 0.5s ease-out ${index * 0.1}s both`
+                animation: `fade-in-up 0.5s ease-out ${index * 0.1}s both`,
               }}
             >
               {/* 블로그 카드 */}
