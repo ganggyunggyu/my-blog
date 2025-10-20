@@ -75,7 +75,6 @@ export function Header() {
 
           {/* 모바일 햄버거 버튼 */}
           <div className="md:hidden flex items-center gap-3">
-            <ThemeToggle />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="text-2xl p-2 hover:bg-[var(--muted)] rounded transition-colors"
@@ -132,6 +131,13 @@ export function Header() {
               </Link>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* 모바일 플로팅 테마 토글 버튼 */}
+      <div className="md:hidden fixed bottom-6 right-6 z-50">
+        <div className="vintage-button p-3 shadow-xl hover:shadow-2xl">
+          <ThemeToggle />
         </div>
       </div>
     </>
