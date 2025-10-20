@@ -7,7 +7,6 @@ import { HiDocumentText, HiPencilSquare } from 'react-icons/hi2';
 export function HeroSection() {
   return (
     <section className="relative py-24 overflow-hidden">
-      {/* 빈티지 종이 질감 배경 */}
       <div
         className="absolute inset-0 opacity-30 pointer-events-none"
         style={{
@@ -22,7 +21,6 @@ export function HeroSection() {
       />
 
       <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
-        {/* 빈티지 장식 상단 */}
         <div className="text-4xl mb-6 opacity-50">✦</div>
 
         <h1
@@ -36,7 +34,6 @@ export function HeroSection() {
           프론트엔드 개발자로 성장하며 배운 것들을 기록합니다
         </p>
 
-        {/* 자기소개 */}
         <AboutSection />
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -55,7 +52,6 @@ export function HeroSection() {
           </Link>
         </div>
 
-        {/* 빈티지 장식 하단 */}
         <div className="text-4xl mt-8 opacity-50">✦</div>
       </div>
     </section>
