@@ -7,7 +7,7 @@ import { ComponentPropsWithoutRef, useState } from "react";
 const usedIds = new Set<string>();
 
 const generateUniqueId = (text: string): string => {
-  let baseId = text
+  const baseId = text
     .toString()
     .toLowerCase()
     .replace(/\s+/g, '-')
