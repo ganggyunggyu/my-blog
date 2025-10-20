@@ -33,14 +33,14 @@ export function ThemeToggle() {
       title={theme === "dark" ? "Light Mode" : "Dark Mode"}
     >
       <span
-        className={`inline-block transition-all duration-300 ${
+        className={`inline-flex items-center justify-center transition-all duration-300 ${
           isAnimating ? 'rotate-180 scale-0' : 'rotate-0 scale-100'
         }`}
       >
         {theme === "dark" ? (
-          <HiSun className="w-6 h-6 text-[var(--accent)]" />
+          <HiSun className="text-[var(--accent)]" style={{ width: '24px', height: '24px' }} />
         ) : (
-          <HiMoon className="w-6 h-6 text-[var(--accent)]" />
+          <HiMoon className="text-[var(--accent)]" style={{ width: '24px', height: '24px' }} />
         )}
       </span>
     </button>
