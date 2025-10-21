@@ -146,17 +146,17 @@ export const MDXComponents = {
       };
 
       return (
-        <div className="relative group">
+        <div className="relative group my-6">
           <pre
-            className="bg-[var(--muted)] rounded-lg p-4 overflow-x-auto my-6"
+            className="bg-[var(--muted)] rounded-lg p-4 overflow-x-auto"
             {...props}
           />
           <button
             onClick={handleCopy}
-            className="absolute top-2 right-2 px-3 py-1.5 text-xs bg-[var(--background)] border border-[var(--border)] rounded opacity-0 group-hover:opacity-100 transition-all hover:bg-[var(--accent)] hover:text-white hover:border-[var(--accent)]"
+            className="absolute top-3 right-3 px-3 py-1.5 text-xs font-medium bg-[var(--background)] text-[var(--foreground)] border border-[var(--border)] rounded shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[var(--accent)] hover:text-white hover:border-[var(--accent)] z-10"
             aria-label="Copy code"
           >
-            {copied ? '복사됨!' : '복사'}
+            {copied ? '✓ 복사됨' : '복사'}
           </button>
         </div>
       );
