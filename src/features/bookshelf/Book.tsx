@@ -47,6 +47,7 @@ export function Book({ post, index }: Props) {
   const bookColor = getBookColor(post.tags);
   const bookHeight = getBookHeight(post.contentLength);
   const isDark = ['#000000', '#3178c6'].includes(bookColor);
+  const isRightSide = index < 5; // 0-4번 인덱스(1-5번째 책)는 우측, 5번 이후는 좌측
 
   return (
     <Link
@@ -161,7 +162,9 @@ export function Book({ post, index }: Props) {
 
         {/* 호버 시 툴팁 */}
         {isHovered && (
-          <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 bg-[var(--background)] border border-[var(--border)] p-4 rounded-lg shadow-xl w-64 pointer-events-none">
+          <div className={`absolute top-1/2 -translate-y-1/2 bg-[var(--background)] border border-[var(--border)] p-4 rounded-lg shadow-xl w-64 pointer-events-none ${
+            isRightSide ? 'left-full ml-4' : 'right-full mr-4'
+          }`}>
             <h3 className="font-bold mb-2 text-sm">{post.title}</h3>
             {post.readingTime && (
               <p className="text-xs opacity-60 mb-2">📖 {post.readingTime}분 소요</p>
