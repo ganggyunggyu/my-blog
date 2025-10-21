@@ -8,7 +8,7 @@ interface Props {
   className?: string;
 }
 
-export function TypingAnimation({ text, speed = 50, className = '' }: Props) {
+export const TypingAnimation = ({ text, speed = 50, className = '' }: Props) => {
   const [displayText, setDisplayText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -31,4 +31,4 @@ export function TypingAnimation({ text, speed = 50, className = '' }: Props) {
       )}
     </figure>
   );
-}
+};

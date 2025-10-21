@@ -2,7 +2,7 @@
 
 import { TypingAnimation } from '@/shared/ui/typing-animation';
 
-export function AboutSection() {
+export const AboutSection = () => {
   return (
     <div className="max-w-2xl mx-auto mb-8 p-6 bg-[var(--muted)] rounded-lg border border-[var(--border)] min-h-[120px]">
       <div className="text-base leading-relaxed opacity-90">
@@ -13,4 +13,4 @@ export function AboutSection() {
       </div>
     </div>
   );
-}
+};

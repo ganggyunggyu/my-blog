@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { AboutSection } from './AboutSection';
 import { HiDocumentText, HiPencilSquare } from 'react-icons/hi2';
 
-export function HeroSection() {
+export const HeroSection = () => {
   return (
     <section className="relative py-24 overflow-hidden">
       <div
@@ -56,4 +56,4 @@ export function HeroSection() {
       </div>
     </section>
   );
-}
+};

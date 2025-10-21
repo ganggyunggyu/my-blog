@@ -9,7 +9,7 @@ interface Props {
   posts: PostMeta[];
 }
 
-export function RecentPosts({ posts }: Props) {
+export const RecentPosts = ({ posts }: Props) => {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   if (posts.length === 0) return null;
@@ -53,4 +53,4 @@ export function RecentPosts({ posts }: Props) {
       </div>
     </section>
   );
-}
+};

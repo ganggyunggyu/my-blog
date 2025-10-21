@@ -8,7 +8,7 @@ interface UseScrollAnimationOptions {
   triggerOnce?: boolean; // 한번만 트리거할지
 }
 
-export function useScrollAnimation(options: UseScrollAnimationOptions = {}) {
+export const useScrollAnimation = (options: UseScrollAnimationOptions = {}) => {
   const { threshold = 0.1, rootMargin = '0px', triggerOnce = true } = options;
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -42,4 +42,4 @@ export function useScrollAnimation(options: UseScrollAnimationOptions = {}) {
   }, [threshold, rootMargin, triggerOnce]);
 
   return { ref, isVisible };
-}
+};

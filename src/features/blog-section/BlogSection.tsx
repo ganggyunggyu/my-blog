@@ -31,7 +31,7 @@ const blogs: BlogItem[] = [
   },
 ];
 
-export function BlogSection() {
+export const BlogSection = () => {
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.5 });
 
   return (
@@ -103,4 +103,4 @@ export function BlogSection() {
       </div>
     </section>
   );
-}
+};

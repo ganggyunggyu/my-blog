@@ -8,7 +8,7 @@ interface Props {
   onChange: (value: string) => void;
 }
 
-export function MarkdownEditor({ value, onChange }: Props) {
+export const MarkdownEditor = ({ value, onChange }: Props) => {
   const { theme } = useTheme();
 
   return (
@@ -27,4 +27,4 @@ export function MarkdownEditor({ value, onChange }: Props) {
       }}
     />
   );
-}
+};

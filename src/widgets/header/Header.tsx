@@ -6,7 +6,7 @@ import { ThemeToggle } from '@/shared/ui/theme-toggle';
 import { useEffect, useState } from 'react';
 import { HiMenu, HiX } from 'react-icons/hi';
 
-export function Header() {
+export const Header = () => {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -136,4 +136,4 @@ export function Header() {
       </div>
     </>
   );
-}
+};

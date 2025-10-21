@@ -42,7 +42,7 @@ const getBookHeight = (contentLength?: number): number => {
   return Math.min(Math.max(scaledHeight, baseHeight), maxHeight);
 };
 
-export function Book({ post, index }: Props) {
+export const Book = ({ post, index }: Props) => {
   const [isHovered, setIsHovered] = useState(false);
   const bookColor = getBookColor(post.tags);
   const bookHeight = getBookHeight(post.contentLength);
@@ -189,4 +189,4 @@ export function Book({ post, index }: Props) {
       </div>
     </Link>
   );
-}
+};

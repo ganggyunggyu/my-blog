@@ -10,7 +10,7 @@ interface Props {
   posts: PostMeta[];
 }
 
-export function Bookshelf({ posts }: Props) {
+export const Bookshelf = ({ posts }: Props) => {
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.5 });
 
   if (posts.length === 0) return null;
@@ -85,4 +85,4 @@ export function Bookshelf({ posts }: Props) {
       </div>
     </section>
   );
-}
+};

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-export function ScrollToTop() {
+export const ScrollToTop = () => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -48,4 +48,4 @@ export function ScrollToTop() {
       </svg>
     </button>
   );
-}
+};

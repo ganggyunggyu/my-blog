@@ -9,7 +9,7 @@ interface Props {
   posts: PostMeta[];
 }
 
-export function PostList({ posts }: Props) {
+export const PostList = ({ posts }: Props) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
@@ -127,4 +127,4 @@ export function PostList({ posts }: Props) {
       )}
     </>
   );
-}
+};

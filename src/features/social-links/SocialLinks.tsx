@@ -38,7 +38,7 @@ const links: LinkItem[] = [
   },
 ];
 
-export function SocialLinks() {
+export const SocialLinks = () => {
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.5 });
 
   return (
@@ -113,4 +113,4 @@ export function SocialLinks() {
       </div>
     </section>
   );
-}
+};

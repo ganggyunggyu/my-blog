@@ -4,7 +4,7 @@ import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { HiSun, HiMoon } from 'react-icons/hi2';
 
-export function ThemeToggle() {
+export const ThemeToggle = () => {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
   const [isAnimating, setIsAnimating] = useState(false);
@@ -51,4 +51,4 @@ export function ThemeToggle() {
       </span>
     </button>
   );
-}
+};
