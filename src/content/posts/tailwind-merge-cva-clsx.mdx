@@ -7,6 +7,8 @@ excerpt: Tailwind CSS를 활용한 React 컴포넌트 관리 방법으로, tailw
 
 # Tailwind를 이용한 효율적인 React Component 관리: tailwind-merge, cva, clsx 파헤치기
 
+![img](https://tailwindcss.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fcard.22502194.jpg&w=3840&q=75)
+
 안녕하세요. 오늘은 Tailwind CSS를 파헤쳐보겠습니다. 저는 부트스트랩으로 처음 CSS 라이브러리에 입문하였고, Tailwind를 사용하게 된 건 홍플릭스 프로젝트를 할 때였어요. 아시다시피 Tailwind는 편리한 만큼 단점이 있죠. 하지만 그에 비해 너무 편하다는 장점이 있었어요, 적어도 제게는 말이죠.
 
 그래서 Tailwind의 공식 문서도 많이 보고, 더 효율적으로 사용할 수 있는 방법을 찾아서 무엇보다도 많이들 사용하는 라이브러리 못지 않게 유연하게 사용할 수 있는 방법을 찾기 위해 다른 분들의 사용 방법도 많이 찾아봤답니다. 결국에 저는 보석 같은 글을 발견하고, 제가 사용하기 편하게 적용해서 개인 프로젝트에도 팀 프로젝트에도 아주 유용하게 사용하고 있습니다.
@@ -169,18 +171,30 @@ export default Button;
 이렇게 해서 사용한 예시까지 보시겠습니다. 여기까진 장황하고 복잡해 보이는데 사용하면 진짜 편해요... 진짜루. 몇 가지의 버튼을 준비해봤습니다.
 
 **파랗고 큰 버튼:**
+
 ```jsx
 <Button variant="blue" size="lg" label="Click me" onClick={handleClickScroll} />
 ```
 
 **추가 클래스를 부여해준 붉은 버튼:**
+
 ```jsx
-<Button variant="red" size="md" label="Red Button" additionalClass="hover:bg-red-600 p-10" />
+<Button
+  variant="red"
+  size="md"
+  label="Red Button"
+  additionalClass="hover:bg-red-600 p-10"
+/>
 ```
 
 **조건식을 넣어준 동그란 버튼:**
+
 ```jsx
-<Button size="circle" label="Circle" additionalClass={clsx({ 'bg-black text-white': isDarkMode })} />
+<Button
+  size="circle"
+  label="Circle"
+  additionalClass={clsx({ 'bg-black text-white': isDarkMode })}
+/>
 ```
 
 다크모드 버튼 색상을 보면 글씨색이 안 바뀌죠. 지정 안 해줘서 그럽니다. 이 또한 clsx가 조건식을 간편하게 사용하게 해주기 때문에 금방 적용시킬 수 있겠죠.

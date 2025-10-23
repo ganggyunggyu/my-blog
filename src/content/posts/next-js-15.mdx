@@ -7,6 +7,8 @@ excerpt: Next.js 15의 핵심 변화(캐싱 기본값, React 19 지원, Turbopac
 
 # Next.js 15, 늦게 봐도 핵심만 싹 정리
 
+![img](https://somwpkzlplaovldnfahk.supabase.co/storage/v1/object/public/heropy.dev_posts/n7JHmI/main.jpg)
+
 이 글은 2025-10-20 기준 Next.js v15.5.x 라인(문서 상 Latest 15.5.6)을 전제로, 14에서 15로 넘어오며 생긴 “실제 영향이 있는” 변화를 정리한 가이드입니다. 공식 블로그와 문서, React 19 릴리스 노트를 기반으로 합니다. ([nextjs.org](https://nextjs.org/docs/app/guides/upgrading/version-15))
 
 > 한 줄 요약: 캐싱 기본값이 “캐시 안 함”으로 바뀌었고, React 19 정식 지원(15.1), Turbopack 개발 서버 안정화(15.0) + 빌드 알파(15.3), 에러 DX/메타데이터/보안·관측성이 크게 개선됐습니다. ([nextjs.org](https://nextjs.org/blog/next-15))
@@ -30,7 +32,7 @@ excerpt: Next.js 15의 핵심 변화(캐싱 기본값, React 19 지원, Turbopac
 | 메타데이터   | viewport 등 분리 작업 진행(14에서 예고)               | 15.2 스트리밍 메타데이터 도입, 15.3에서 viewport 옵션 분리 완료                                                                     |
 | 에러 DX      | 기본 개선                                             | 15.1~15.2에서 에러 UI/오너 스택 등 대폭 개선                                                                                        |
 | 보안/관측    | -                                                     | Server Actions 보안 강화(난수 ID, 미사용 제거), instrumentation.js 안정화, instrumentation-client 도입(15.3)                        |
-| 기타 DX      | -                                                     | next.config.ts 지원, ESLint 9 지원, Static Route Indicator, `<Form>` 컴포넌트 강화                                                    |
+| 기타 DX      | -                                                     | next.config.ts 지원, ESLint 9 지원, Static Route Indicator, `<Form>` 컴포넌트 강화                                                  |
 
 ## 출처: 14/15 릴리스 노트 및 15.1/15.2/15.3 블로그, React 19 블로그. ([nextjs.org](https://nextjs.org/blog/next-14))
 
