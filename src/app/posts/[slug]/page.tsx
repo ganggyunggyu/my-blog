@@ -1,13 +1,14 @@
-import { notFound } from "next/navigation";
-import { getPostBySlug, getPostSlugs } from "@/entities/post";
-import { format } from "date-fns";
-import { MDXRemote } from "next-mdx-remote/rsc";
-import { MDXComponents } from "@/shared/ui/mdx-components";
-import Link from "next/link";
-import { ReadingProgress } from "@/shared/ui/reading-progress";
-import { TableOfContents } from "@/features/table-of-contents";
-import rehypePrism from "rehype-prism-plus";
-import remarkGfm from "remark-gfm";
+import { notFound } from 'next/navigation';
+import { getPostBySlug, getPostSlugs } from '@/entities/post';
+import { format } from 'date-fns';
+import { MDXRemote } from 'next-mdx-remote/rsc';
+import { MDXComponents } from '@/shared/ui/mdx-components';
+import Link from 'next/link';
+import { ReadingProgress } from '@/shared/ui/reading-progress';
+import { TableOfContents } from '@/features/table-of-contents';
+import rehypePrism from 'rehype-prism-plus';
+import remarkGfm from 'remark-gfm';
+import React from 'react';
 
 export async function generateStaticParams() {
   const slugs = getPostSlugs();
@@ -26,7 +27,7 @@ export async function generateMetadata({ params }: Props) {
 
   if (!post) {
     return {
-      title: "포스트를 찾을 수 없습니다",
+      title: '포스트를 찾을 수 없습니다',
     };
   }
 
@@ -45,7 +46,7 @@ export default async function PostPage({ params }: Props) {
   }
 
   return (
-    <>
+    <React.Fragment>
       <ReadingProgress />
       <TableOfContents />
 
@@ -57,10 +58,12 @@ export default async function PostPage({ params }: Props) {
           >
             ← 포스트 목록으로
           </Link>
-          <h1 className="text-4xl font-bold mb-4 animate-fade-in">{post.title}</h1>
+          <h1 className="text-4xl font-bold mb-4 animate-fade-in">
+            {post.title}
+          </h1>
           <div className="flex items-center gap-4 text-sm opacity-70 mb-4">
             <time dateTime={new Date(post.date).toISOString().split('T')[0]}>
-              {format(new Date(post.date), "yyyy년 MM월 dd일")}
+              {format(new Date(post.date), 'yyyy년 MM월 dd일')}
             </time>
             {post.readingTime && (
               <>
@@ -90,14 +93,12 @@ export default async function PostPage({ params }: Props) {
             options={{
               mdxOptions: {
                 remarkPlugins: [remarkGfm],
-                rehypePlugins: [
-                  [rehypePrism, { ignoreMissing: true }]
-                ],
+                rehypePlugins: [[rehypePrism, { ignoreMissing: true }]],
               },
             }}
           />
         </div>
       </article>
-    </>
+    </React.Fragment>
   );
 }
