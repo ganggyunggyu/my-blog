@@ -1,0 +1,251 @@
+---
+title: 재귀가 싫다면? DFS랑 화해하는 법 (JS/Python 예제로 싹 정리)
+date: 2025-10-23
+tags: [재귀, DFS, 그래프, 자바스크립트, 파이썬]
+excerpt: DFS는 재귀의 다른 얼굴. 콜스택과 명시적 스택로 원리와 구현을 정리.
+---
+
+# 본문 시작
+
+재귀를 싫어한다는 말, 완전 공감이야. 콜스택이 꽉 차서 터지는 그 순간의 공포는 누구나 한 번쯤 겪거든.
+근데 아이러니하게도 우리가 실무에서 자주 쓰는 DFS가 바로 “재귀스럽게” 동작해.
+즉, DFS는 재귀의 사촌이자, 사실상 같은 스택 원리로 굴러가는 친구라는 거.
+오늘은 재귀와 DFS의 관계를 정리하고, JS/Python 코드로 깔끔하게 비교해볼게.
+
+⸻
+
+## 1) DFS와 재귀, 서로 어떤 사이?
+
+- DFS(깊이 우선 탐색)는 “한 길을 끝까지 파고들다 막히면 되돌아오는” 전략이야.
+- 재귀 DFS는 언어가 제공하는 콜스택을 “암묵적 스택”으로 쓰는 구현이고, 반복 DFS는 개발자가 스택 자료구조를 “명시적으로” 들고 다니는 구현이야.
+- 둘 다 논리는 동일해. 차이는 “스택을 누가 관리하느냐(언어 vs 너)”뿐.
+- 복잡도는 그래프 인접 리스트 기준으로 O(V+E). 추가 메모리는 깊이 h에 대해 O(h)로 비슷하지만, 재귀는 콜스택 한도를 넘기기 쉬워.
+
+⸻
+
+## 2) 그래프 DFS: 재귀 vs 반복, 나란히 비교
+
+예제 그래프(인접 리스트, 유향/무향 상관없이 방문 체크만 잘 하면 돼):
+
+```python
+# Python
+graph = {
+ "A": ["B", "C"],
+ "B": ["D", "E"],
+ "C": ["F"],
+ "D": [],
+ "E": ["F"],
+ "F": []
+}
+```
+
+```javascript
+// JavaScript
+const graph = {
+  A: ['B', 'C'],
+  B: ['D', 'E'],
+  C: ['F'],
+  D: [],
+  E: ['F'],
+  F: [],
+};
+```
+
+- Python: 재귀 DFS
+
+```python
+def dfs_recursive(g, start, visited=None):
+ if visited is None:
+ visited = set()
+ visited.add(start)
+ for nei in g[start]:
+ if nei not in visited:
+ dfs_recursive(g, nei, visited)
+ return visited
+
+print(dfs_recursive(graph, "A")) # {'A','B','D','E','F','C'} (순서는 구현/데이터에 따라 달라질 수 있음)
+```
+
+- Python: 반복 DFS(명시적 스택)
+
+```python
+def dfs_iter(g, start):
+ visited = set()
+ stack = [start]
+ while stack:
+ node = stack.pop()
+ if node in visited:
+ continue
+ visited.add(node)
+ # 재귀와 유사한 방문 순서를 원하면 역순으로 push
+ for nei in reversed(g[node]):
+ if nei not in visited:
+ stack.append(nei)
+ return visited
+
+print(dfs_iter(graph, "A"))
+```
+
+- JavaScript: 재귀 DFS
+
+```javascript
+function dfsRecursive(g, start, visited = new Set()) {
+  visited.add(start);
+  for (const nei of g[start]) {
+    if (!visited.has(nei)) dfsRecursive(g, nei, visited);
+  }
+  return visited;
+}
+
+console.log(dfsRecursive(graph, 'A'));
+```
+
+- JavaScript: 반복 DFS(명시적 스택)
+
+```javascript
+function dfsIter(g, start) {
+  const visited = new Set();
+  const stack = [start];
+  while (stack.length) {
+    const node = stack.pop();
+    if (visited.has(node)) continue;
+    visited.add(node);
+    // 재귀와 유사한 순서를 원하면 역순으로 push
+    for (const nei of [...g[node]].reverse()) {
+      if (!visited.has(nei)) stack.push(nei);
+    }
+  }
+  return visited;
+}
+
+console.log(dfsIter(graph, 'A'));
+```
+
+핵심 포인트
+
+- 방문 체크는 “스택에서 꺼냈을 때” 하거나 “넣기 전”에 해도 되는데, 중복 push를 줄이려면 넣기 전에 하는 패턴도 자주 써.
+- 순서가 중요하면(예: 테스트 케이스 고정) 인접 리스트 정렬 + push 순서 고정이 필요해.
+
+⸻
+
+## 3) 트리 DFS 한 방에 이해: 전위/중위/후위
+
+트리는 사이클이 없어서 visited가 필요 없고, DFS가 바로 전위/중위/후위 순회야.
+
+- Python
+
+```python
+class Node:
+ def __init__(self, val, left=None, right=None):
+ self.val, self.left, self.right = val, left, right
+
+root = Node(1, Node(2, Node(4), Node(5)), Node(3))
+
+def preorder(root):
+ res = []
+ def go(n):
+ if not n: return
+ res.append(n.val) # 전위: 방문 → 좌 → 우
+ go(n.left); go(n.right)
+ go(root); return res
+
+def inorder(root):
+ res = []
+ def go(n):
+ if not n: return
+ go(n.left); res.append(n.val); go(n.right) # 중위: 좌 → 방문 → 우
+ go(root); return res
+
+def postorder(root):
+ res = []
+ def go(n):
+ if not n: return
+ go(n.left); go(n.right); res.append(n.val) # 후위: 좌 → 우 → 방문
+ go(root); return res
+
+print(preorder(root), inorder(root), postorder(root))
+```
+
+- JavaScript
+
+```javascript
+class Node {
+  constructor(val, left = null, right = null) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+  }
+}
+
+const root = new Node(1, new Node(2, new Node(4), new Node(5)), new Node(3));
+
+function preorder(root) {
+  const res = [];
+  (function go(n) {
+    if (!n) return;
+    res.push(n.val);
+    go(n.left);
+    go(n.right);
+  })(root);
+  return res;
+}
+
+function inorder(root) {
+  const res = [];
+  (function go(n) {
+    if (!n) return;
+    go(n.left);
+    res.push(n.val);
+    go(n.right);
+  })(root);
+  return res;
+}
+
+function postorder(root) {
+  const res = [];
+  (function go(n) {
+    if (!n) return;
+    go(n.left);
+    go(n.right);
+    res.push(n.val);
+  })(root);
+  return res;
+}
+
+console.log(preorder(root), inorder(root), postorder(root));
+```
+
+보너스: 트리 전위 반복 버전
+
+```javascript
+function preorderIter(root) {
+  const res = [],
+    stack = [root];
+  while (stack.length) {
+    const n = stack.pop();
+    if (!n) continue;
+    res.push(n.val);
+    stack.push(n.right, n.left); // 우→좌 순으로 push해야 pop시 좌가 먼저 나옴
+  }
+  return res;
+}
+```
+
+⸻
+
+## 4) 실무에서 부딪히는 함정과 탈출법
+
+- 깊이 문제: Python은 기본 재귀 한도가 보통 1000쯤이라 매우 깊은 그래프/트리에서 `RecursionError`가 나기 쉽다. `sys.setrecursionlimit()`로 올릴 수 있지만, 너무 높이면 크래시 위험이 커. 이럴 땐 반복 DFS로 전환하는 게 안전하다.
+- JS도 콜스택 한도가 제한적이야. 게다가 표준의 “정확한 꼬리호출(PTC)”은 대부분 엔진에서 미지원이므로 꼬리재귀에 기대지 않는 게 좋아.
+- 사이클 주의: 그래프 DFS는 `visited` 없으면 무한 루프 직행. 방문 체크는 “빠를수록” 좋아.
+- 순서 결정성: 테스트나 직렬화 결과를 고정하려면 인접 리스트를 정렬하고, push/pop 순서를 명시하자.
+- 복잡도 체크: 인접 리스트 기준 DFS 시간 O(V+E), 공간은 최대 깊이 h에 비례. 반복이든 재귀든 본질은 “스택”이라는 걸 기억하자.
+- 쓰임새: 연결 요소 세기, 위상 정렬(방문 타이밍 중요), 사이클 탐지, 섬의 개수(그리드 DFS), 경로 존재성 확인 등에서 실전 효자야.
+
+⸻
+
+## 마무리
+
+결론은 간단해. DFS는 재귀의 다른 이름이 아니라, “스택을 어떻게 들고 다니느냐”의 선택지야.
+콜스택이 부담스럽다면 명시적 스택으로, 깊이가 얕고 코드가 간결하길 원하면 재귀로 가면 된다.
+어떤 방식이든 스택의 움직임만 보이면 DFS는 더 이상 무섭지 않아.

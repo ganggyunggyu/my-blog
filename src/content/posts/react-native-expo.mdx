@@ -1,0 +1,244 @@
+---
+title: 하이브리드 앱, 지금 시작한다면 React Native + Expo가 편하더라
+date: 2025-10-21
+tags: [React Native, Expo, 하이브리드 앱, EAS, 모바일]
+excerpt: React Native와 Expo로 프로젝트 생성부터 빌드·배포·OTA 업데이트까지 한 번에 정리했다.
+---
+
+하이브리드 앱이 대세냐고? “될 놈”을 고르면 대세가 맞지.
+나는 React Native에 Expo를 얹어서 스타트업 속도로 가는 편이야. 네이티브 맛 살리면서도 설치, 빌드, 배포가 깔끔하거든.
+오늘은 RN + Expo로 처음부터 배포까지 쭉 달려보자. 괜히 어렵게 가지 말고, 일단 만들어서 굴려보는 게 답이야.
+
+## 1) RN+Expo, 어디에 좋은 약이냐
+
+- React Native는 자바스크립트/타입스크립트로 iOS·Android 모두 개발하는 프레임워크야.
+- Expo는 RN 위에 얹는 “개발·빌드·배포 툴링 번들”이라고 보면 돼. Expo Go 앱으로 빠르게 미리보기, 클라우드 빌드(EAS), OTA 업데이트까지 패키지로 제공해.
+- 장점: 초기 설정이 가볍고, 카메라/파일/센서 같은 모듈을 바로 쓸 수 있고, 빌드 파이프라인(EAS)이 준비돼 있음.
+- 한계: 아주 깊은 네이티브 커스터마이징은 “프리빌드(prebuild)”나 “Bare”로 내려가야 해. 그래도 시작은 가볍게, 필요하면 점진적 네이티브 확장이라는 전략이 깔끔해.
+
+## 2) 프로젝트 생성부터 실행까지, 10분 컷
+
+먼저 프로젝트 만든다. 템플릿은 아무거나 골라도 OK.
+
+```bash
+# 프로젝트 생성
+npx create-expo-app my-app
+
+cd my-app
+
+# 개발 서버 시작 (QR 찍어서 Expo Go로 실행 가능)
+npx expo start
+```
+
+개발할수록 디바이스에서 네이티브 모듈을 제대로 써야 할 때가 와. 그땐 “개발용 클라이언트(Dev Build)”를 만들어 쓰자.
+
+```bash
+# 개발용 클라이언트 설치 및 실행
+npx expo install expo-dev-client
+npx expo run:ios # macOS + Xcode
+npx expo run:android
+```
+
+네이티브 코드가 필요한 라이브러리를 붙이는 순간엔 “프리빌드”로 iOS/Android 폴더를 생성한다.
+
+```bash
+# iOS/Android 네이티브 프로젝트 생성
+npx expo prebuild
+```
+
+팁: 큰 변경 전에 git 커밋 하나 박아두자. 프리빌드는 되돌리기 귀찮을 때가 있다.
+
+## 3) 라우팅, 상태, 폼… 실사용 코드로 감 잡기
+
+요즘 Expo에선 파일 기반 라우팅이 있는 Expo Router가 편하다. `app` 폴더만 잘 구성하면 끝.
+
+```bash
+# 라우터 설치(템플릿에 포함된 경우 생략)
+npx expo install expo-router react-native-safe-area-context react-native-screens
+```
+
+```tsx
+// app/_layout.tsx
+import { Stack } from 'expo-router';
+
+export default function RootLayout() {
+  return <Stack screenOptions={{ headerShown: false }} />;
+}
+```
+
+```tsx
+// app/index.tsx
+import { Link } from 'expo-router';
+import { Text, View } from 'react-native';
+
+export default function Home() {
+  return (
+    <View style={{ padding: 24 }}>
+      <Text style={{ fontSize: 22, fontWeight: '600' }}>안녕, Expo 👋</Text>
+      <Link href="/form" style={{ marginTop: 12, color: '#4f46e5' }}>
+        폼 화면으로 이동
+      </Link>
+    </View>
+  );
+}
+```
+
+```tsx
+// app/form.tsx
+import { useState } from 'react';
+import { View, TextInput, Button, Alert } from 'react-native';
+
+export default function Form() {
+  const [name, setName] = useState('');
+  return (
+    <View style={{ padding: 24, gap: 12 }}>
+      <TextInput
+        value={name}
+        onChangeText={setName}
+        placeholder="이름 입력"
+        style={{
+          borderWidth: 1,
+          borderColor: '#ddd',
+          padding: 12,
+          borderRadius: 8,
+        }}
+      />
+      <Button
+        title="제출"
+        onPress={() => Alert.alert('제출 완료', `안녕, ${name}`)}
+      />
+    </View>
+  );
+}
+```
+
+성능이 민감한 리스트는 FlatList 대신 FlashList를 추천. 애니메이션은 Reanimated로 부드럽게. 이미지 캐싱과 스켈레톤 로딩까지 챙기면 체감 품질이 확 올라가.
+
+## 4) EAS로 빌드·스토어 제출·OTA 업데이트까지
+
+로컬에서 Xcode/Android Studio로 빌드해도 되지만, 팀 작업이면 EAS가 깔끔해. iOS가 Windows에서 막히는 문제도 클라우드로 우회 가능.
+
+```bash
+# EAS CLI 설치 및 로그인
+npm i -g eas-cli
+eas login
+
+# 프로젝트에 EAS 구성 추가
+eas build:configure
+```
+
+빌드는 프로파일로 관리한다. `eas.json`을 만들어서 스토어용과 내부 배포용을 분리하자.
+
+```json
+{
+  "cli": { "version": ">= 3.0.0" },
+  "build": {
+    "preview": {
+      "developmentClient": true,
+      "android": { "gradleCommand": ":app:assembleDebug" }
+    },
+    "production": {
+      "ios": { "simulator": false },
+      "android": { "gradleCommand": ":app:bundleRelease" }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
+```
+
+```bash
+# 빌드
+eas build -p ios --profile production
+eas build -p android --profile production
+
+# 스토어 제출(직전 빌드 사용)
+eas submit -p ios --latest
+eas submit -p android --latest
+```
+
+OTA(Over-The-Air) 업데이트는 “핫픽스의 친구”다. 스토어 리뷰 없이 JS/에셋만 교체한다.
+
+```bash
+# 프로젝트에 OTA 업데이트 연결(최초 1회)
+eas update:configure
+
+# 브랜치/메시지를 붙여 배포
+eas update --branch production --message "문구 오타 수정"
+```
+
+런타임 버전이 다르면 OTA가 적용되지 않는다. 앱 버전과 묶는 방식이 관리하기 편해.
+
+```ts
+// app.config.ts
+export default {
+  expo: {
+    name: 'my-app',
+    version: '1.2.0',
+    runtimeVersion: { policy: 'appVersion' }, // 앱 버전이 곧 런타임 버전
+    updates: { enabled: true },
+  },
+};
+```
+
+## 5) 권한·푸시·딥링크, 현업에서 자주 까먹는 것들
+
+- 권한 문구: iOS는 Info.plist 문구 필수다. Expo는 `app.config.ts`에서 설정 가능.
+
+```ts
+// app.config.ts (발췌)
+ios: {
+  infoPlist: {
+    NSCameraUsageDescription: '프로필 사진 촬영을 위해 카메라 권한이 필요합니다.';
+  }
+}
+```
+
+- 로컬 알림: 처음엔 로컬로 흐름만 잡고, 서버 연동은 나중에 붙여도 된다.
+
+```ts
+import * as Notifications from 'expo-notifications';
+
+// 권한 요청
+await Notifications.requestPermissionsAsync();
+
+// 5초 뒤 로컬 알림
+await Notifications.scheduleNotificationAsync({
+  content: { title: '알림', body: '로컬 알림 테스트 🚀' },
+  trigger: { seconds: 5 },
+});
+```
+
+- 딥링크: Expo Router는 기본 스킴 링크를 쉽게 처리한다. 앱 스킴을 정해두고 마케팅/푸시 링크에 적극 활용하자.
+
+```ts
+// app.config.ts (발췌)
+scheme: "myapp",
+```
+
+- 빌드 속성 튜닝: 최소 SDK, iOS 타깃, 네트워킹 설정 등은 플러그인으로 일괄 관리가 편하다.
+
+```ts
+// app.config.ts (발췌)
+plugins: [
+  [
+    'expo-build-properties',
+    {
+      ios: { deploymentTarget: '13.0' },
+      android: { minSdkVersion: 24 },
+    },
+  ],
+];
+```
+
+## 6) 언제 Bare로 갈아타야 하냐
+
+- 사내 SDK·디바이스 전용 네이티브 API를 붙여야 하거나, 고성능 그래픽/미디어 파이프라인을 세밀하게 만질 때.
+- 특정 네이티브 라이브러리의 빌드 플래그/Gradle 설정을 과감하게 커스터마이징해야 할 때.
+- 그 외 대부분 서비스형 앱은 Managed → Dev Client → Prebuild 조합으로 충분히 간다. 필요할 때만 내려가면 유지보수 비용이 훨씬 낮아.
+
+---
+
+마무리하자면, RN+Expo는 “빠르게 만들고 안전하게 배포”하는 데 특화된 스택이야.
+가볍게 시작하고, EAS와 OTA로 운영 속도를 확보하고, 진짜 필요한 순간에만 네이티브로 내려가면 된다. 오늘은 설치하고 홈 화면 하나만 띄워도 충분히 잘한 거다.

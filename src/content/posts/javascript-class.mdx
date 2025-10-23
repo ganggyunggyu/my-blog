@@ -1,0 +1,248 @@
+---
+title: 자바스크립트 Class, 뭐가 다른데 언제 쓰면 좋을까
+date: 2025-10-21
+tags: [JavaScript, Class, OOP, Prototype, ES2022]
+excerpt: JS 클래스의 정체, 프로토타입과 차이, 실전 사용처와 함정을 한 번에 정리했다.
+---
+
+요즘 코드 보다가 class가 보이면 갑자기 객체지향 수업이 떠오르지?
+근데 자바스크립트 class는 전통적인 언어의 클래스랑 느낌이 조금 달라.
+사실상 “프로토타입을 예쁘게 쓰게 해주는 문법 설탕”인데, 덕분에 읽기/작성하기가 훨씬 깔끔해졌어.
+언제 쓰면 좋은지, 뭐가 다른지, 실전 팁까지 한 방에 정리해볼게.
+
+## 1) 클래스의 정체: 결국 프로토타입의 포장지
+
+자바스크립트 class는 내부적으로 함수(생성자)와 prototype을 깔끔하게 묶어주는 문법이야.
+메서드는 자동으로 프로토타입에 올라가고, 열거되지 않도록 정의돼서 사용성이 좋아져.
+
+```js
+// class 버전
+class User {
+  constructor(name) {
+    this.name = name;
+  }
+  greet() {
+    return `hi ${this.name}`;
+  } // 프로토타입 메서드
+}
+const u = new User('kim');
+u.greet();
+
+// 동일 개념을 함수+prototype으로 풀어 쓰면
+function User2(name) {
+  this.name = name;
+}
+User2.prototype.greet = function () {
+  return `hi ${this.name}`;
+};
+```
+
+알아두면 좋은 차이점들:
+
+- class 선언은 함수처럼 호이스팅되어 바로 호출되지 않아. 선언 이전에 new 하면 터진다.
+- 클래스 몸체 안은 항상 strict mode고, new 없이 호출하면 TypeError야.
+- 필드/메서드 문법이 풍부해졌어: 공개 필드, 비공개 필드(#), getter/setter, static, static 초기화 블록 등.
+
+## 2) 언제 class가 딱 맞나: “상태 + 수명 + 역할”이 있을 때
+
+클래스가 잘 맞는 순간은 객체가 시간에 따라 상태가 변하고, 그 상태를 다루는 행동이 함께 있을 때야.
+
+- 도메인 모델: 주문, 장바구니, 좌표, 통화 금액 같은 것들.
+- 리소스 관리자: 캐시, 큐, 연결 풀, 브라우저 탭 상태 등 “열고/닫고/정리”가 필요한 것.
+- UI 컴포넌트: Custom Elements(HTMLElement 상속), 인터랙션 위젯, 에디터 플러그인.
+- 에러/전략/어댑터 패턴: Error를 확장하거나, 교체 가능한 전략 객체를 만들 때.
+
+반대로 이땐 굳이 클래스가 필요 없어:
+
+- 순수 유틸 모음(상태 없음) → 그냥 함수 묶음이 더 직관적.
+- 단발성 데이터 레코드 → 객체 리터럴/구조 분해가 깔끔.
+- 전역 네임스페이스용 “빈 클래스” → 모듈로 해결하는 게 낫다.
+
+## 3) 필수 문법 스냅샷: 비공개 필드, 정적, 상속, 접근자
+
+현대 JS 클래스가 주는 실용 기능들을 한 번에 보자.
+
+```js
+class Counter {
+  // 인스턴스 비공개 상태: 런타임에서도 진짜 숨겨짐
+  #value = 0;
+
+  // 공개 필드(인스턴스마다 존재)
+  step = 1;
+
+  // 정적 비공개 캐시(클래스 단위 공유)
+  static #pool = new Map();
+
+  // 정적 초기화 블록: 클래스 로드 시 1회 실행
+  static {
+    Counter.#pool.set('default', 0);
+  }
+
+  constructor(initial = Counter.#pool.get('default')) {
+    this.#value = initial;
+  }
+  inc() {
+    this.#value += this.step;
+    return this;
+  }
+  get value() {
+    return this.#value;
+  } // 접근자
+  static from(n) {
+    return new Counter(n);
+  } // 정적 팩토리
+}
+
+const c = Counter.from(10).inc().inc();
+console.log(c.value); // 12
+```
+
+상속도 깔끔하게 돼. Error를 확장하면 에러 핸들링이 단맛 난다.
+
+```js
+class HttpError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.name = 'HttpError';
+    this.status = status;
+  }
+}
+throw new HttpError(404, 'Not Found');
+```
+
+## 4) this와 메서드 바인딩: “왜 클릭하면 this가 undefined지?”
+
+클래스 메서드는 기본적으로 프로토타입에 올라가고, 호출 시 컨텍스트에 this가 결정돼.
+이벤트 리스너나 콜백으로 넘길 땐 this가 바뀌기 쉬워서 두 가지 패턴 중 하나를 쓰자.
+
+1. 명시적으로 bind
+
+```js
+class Toggle {
+  constructor(button) {
+    this.button = button;
+    this.onClick = this.onClick.bind(this);
+    button.addEventListener('click', this.onClick);
+  }
+  onClick() {
+    this.button.classList.toggle('is-active');
+  }
+  destroy() {
+    this.button.removeEventListener('click', this.onClick);
+  }
+}
+```
+
+2. 화살표 필드로 인스턴스에 고정(this 캡처) — 메모리는 더 쓰지만 편해
+
+```js
+class Toggle {
+  constructor(button) {
+    this.button = button;
+  }
+  onClick = () => {
+    this.button.classList.toggle('is-active');
+  };
+}
+```
+
+주의: 화살표 메서드는 “인스턴스마다 생성”되므로 대량 객체엔 비용이 커질 수 있어.
+공유 가능한 로직은 프로토타입 메서드(기본 방식)로 두고, 콜백 바인딩이 꼭 필요할 때만 화살표 필드를 쓰자.
+
+## 5) 상속보다 합성: 의존성 주입으로 테스트까지 깔끔하게
+
+클래스를 쓰더라도 무조건 extends로 연결할 필요는 없어.
+대부분은 “합성(컴포지션)”이 더 예측 가능하고 테스트하기 쉬워.
+
+```js
+class Logger {
+  log(...args) {
+    console.log('[app]', ...args);
+  }
+}
+
+class UserService {
+  constructor({ logger }) {
+    this.logger = logger;
+  } // 의존성 주입
+  async create(name) {
+    this.logger.log('creating user', name);
+    // ...생성 로직
+  }
+}
+
+const service = new UserService({ logger: new Logger() });
+```
+
+테스트에서는 더미 logger를 주입하면 끝:
+
+```js
+const logs = [];
+const fakeLogger = { log: (...a) => logs.push(a) };
+const svc = new UserService({ logger: fakeLogger });
+```
+
+상속은 “진짜로 타입 계층이 필요한 경우”에만 사용하자.
+예: 공통 인터페이스를 강제하고, 다형적 교체가 자연스러운 플러그인 구조 등.
+
+## 6) 실무 팁: 직렬화, 불변성, 타입과의 궁합
+
+- 직렬화(JSON.stringify): 비공개 필드(#)와 메서드는 직렬화되지 않아. DTO로 내보낼 땐 toJSON 같은 메서드를 제공하자.
+
+```js
+class Money {
+  #amount;
+  #currency;
+  constructor(amount, currency) {
+    this.#amount = amount;
+    this.#currency = currency;
+  }
+  toJSON() {
+    return { amount: this.#amount, currency: this.#currency };
+  }
+}
+```
+
+- 불변성: 클래스는 상태가 변하기 쉬워. 외부에 공개되는 프로퍼티는 최대한 읽기 전용(getter)로, 변경은 메서드로 통제하자.
+- 성능: 로직이 무거울수록 “프로토타입 메서드 공유”가 유리하다. 인스턴스 필드에 화살표 함수 남발은 피하기.
+- 타입스크립트와 함께: TS의 private 키워드와 JS의 #private는 다른 개념이야. #은 런타임에서 진짜 숨겨지고, TS private은 컴파일 타임 경고 중심이니 목적에 맞게 선택하자.
+- 모듈과 공존: “상태 없는 계산”은 모듈 함수로, “수명 있는 객체”는 클래스 도메인으로 구분하면 유지보수가 편해.
+
+## 7) 작은 실전 예: 캐시 어댑터
+
+클래스가 “역할과 수명”을 가질 때 딱이다.
+
+```js
+class FetchCache {
+  #store = new Map();
+  ttl = 5_000; // ms
+
+  constructor(ttl) {
+    if (ttl) this.ttl = ttl;
+  }
+
+  async get(url) {
+    const now = Date.now();
+    const hit = this.#store.get(url);
+    if (hit && now - hit.time < this.ttl) return hit.data;
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    this.#store.set(url, { time: now, data });
+    return data;
+  }
+
+  clear() {
+    this.#store.clear();
+  }
+}
+```
+
+이런 건 상태, 정책(ttl), 자원(fetch)까지 묶여 있어서 클래스가 딱 맞아.
+
+## 마치며
+
+자바스크립트 class는 “프로토타입을 잘 쓰게 해주는 문법”이지만, 상태와 수명이 있는 객체를 모델링할 땐 가장 읽기 좋은 도구야.
+상속은 신중히, 합성과 주입은 적극적으로, 비공개 필드와 프로토타입 메서드로 성능·캡슐화를 챙기면 된다.
+실무에선 “함수 vs 클래스”를 기능의 성격(순수 계산 vs 상태 관리)으로 가르는 습관만 들여도 코드가 훨씬 건강해진다.

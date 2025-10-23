@@ -1,0 +1,210 @@
+---
+title: 알고리즘 기초 너비 우선 탐색(BFS) 한방에 정리 — JS와 Python 비교
+date: 2025-10-21
+tags: [BFS, 그래프, 큐, JavaScript, Python]
+excerpt: BFS 핵심 개념부터 JS·Python 구현 차이와 실수 포인트까지 한 번에 정리.
+---
+
+그래프 문제 오래 쉬었어도 걱정할 필요 없어.
+BFS는 “가까운 것부터 차례대로” 훑는 탐색이야. 한 레벨(거리)씩 넓어지면서 방문하니까, 가중치가 없는 그래프에서 최단거리 구할 때 딱이거든.
+핵심은 큐(Queue)로 방문 대상을 관리하는 것. 이 글에선 감을 바로 되살리도록, 간단 예제와 함께 JS와 Python 구현 차이까지 싹 정리해볼게.
+
+## 1) BFS 핵심 요약: 언제, 왜 쓰나
+
+- 정의: 시작점에서 거리 0, 1, 2… 순서대로 이웃 정점을 방문하는 탐색.
+- 쓰임새: 무가중치 최단거리, 레벨 순회, 최소 이동 횟수, 영역(컴포넌트) 탐색 등.
+- 복잡도: O(V+E). 정점·간선 한 번씩만 만지면 끝.
+- 포인트: “큐 + 방문표시(visited)”면 80%는 끝났다고 보면 돼.
+
+## 2) 그래프 BFS — 최소 예제부터
+
+인접 리스트로 그래프를 표현하고, 시작 정점에서 각 정점까지의 최단거리를 구해보자.
+
+Python (deque로 O(1) 큐 연산)
+
+```python
+from collections import deque
+from typing import Dict, List, Hashable
+
+def bfs(adj: Dict[Hashable, List[Hashable]], start) -> Dict[Hashable, int]:
+ q = deque([start])
+ visited = {start}
+ dist = {start: 0}
+
+ while q:
+ u = q.popleft()
+ for v in adj.get(u, []):
+ if v not in visited:
+ visited.add(v)
+ dist[v] = dist[u] + 1
+ q.append(v)
+ return dist
+
+# 예시 그래프
+adj = {
+ "A": ["B", "C"],
+ "B": ["D"],
+ "C": ["D", "E"],
+ "D": ["F"],
+ "E": [],
+ "F": []
+}
+print(bfs(adj, "A")) # {'A':0,'B':1,'C':1,'D':2,'E':2,'F':3}
+```
+
+JavaScript (배열을 큐로 쓰되 head 포인터로 O(1) 시뮬레이션)
+
+```javascript
+function bfs(adj, start) {
+  const q = [start];
+  let head = 0; // shift() 대신 head 인덱스로 큐 흉내
+  const visited = new Set([start]);
+  const dist = new Map([[start, 0]]);
+
+  while (head < q.length) {
+    const u = q[head++];
+    const neighbors = adj.get(u) || [];
+    for (const v of neighbors) {
+      if (!visited.has(v)) {
+        visited.add(v);
+        dist.set(v, dist.get(u) + 1);
+        q.push(v);
+      }
+    }
+  }
+  return dist;
+}
+
+// 예시 그래프 (Map + 배열)
+const adj = new Map([
+  ['A', ['B', 'C']],
+  ['B', ['D']],
+  ['C', ['D', 'E']],
+  ['D', ['F']],
+  ['E', []],
+  ['F', []],
+]);
+console.log(Object.fromEntries(bfs(adj, 'A'))); // {A:0,B:1,C:1,D:2,E:2,F:3}
+```
+
+메모:
+
+- Python은 deque.popleft()가 진짜 O(1)이라 속 편해.
+- JS는 Array.shift()가 O(n)이라 느려질 수 있어서 head 인덱스 트릭을 자주 쓴다.
+
+## 3) 격자(Grid) BFS — 최단 이동 횟수
+
+0은 이동 가능, 1은 벽이라고 하자. 시작(sx, sy)에서 목표(tx, ty)까지 최소 칸 수를 구해보자.
+
+Python
+
+```python
+from collections import deque
+from typing import List
+
+def shortest_path_grid(grid: List[List[int]], sr: int, sc: int, tr: int, tc: int) -> int:
+ R, C = len(grid), len(grid[0])
+ dist = [[-1]*C for _ in range(R)]
+ q = deque([(sr, sc)])
+ dist[sr][sc] = 0
+ DIRS = [(1,0),(-1,0),(0,1),(0,-1)]
+
+ while q:
+ r, c = q.popleft()
+ if (r, c) == (tr, tc):
+ break
+ for dr, dc in DIRS:
+ nr, nc = r+dr, c+dc
+ if 0 <= nr < R and 0 <= nc < C and grid[nr][nc] == 0 and dist[nr][nc] == -1:
+ dist[nr][nc] = dist[r][c] + 1
+ q.append((nr, nc))
+ return dist[tr][tc]
+
+grid = [
+ [0,0,1,0],
+ [0,0,0,0],
+ [1,0,1,0],
+ [0,0,0,0],
+]
+print(shortest_path_grid(grid, 0, 0, 3, 3))
+```
+
+JavaScript
+
+```javascript
+function shortestPathGrid(grid, sr, sc, tr, tc) {
+  const R = grid.length,
+    C = grid[0].length;
+  const dist = Array.from({ length: R }, () => Array(C).fill(-1));
+  const q = [[sr, sc]];
+  let head = 0;
+  dist[sr][sc] = 0;
+  const DIRS = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ];
+
+  while (head < q.length) {
+    const [r, c] = q[head++];
+    if (r === tr && c === tc) break;
+    for (const [dr, dc] of DIRS) {
+      const nr = r + dr,
+        nc = c + dc;
+      if (
+        nr >= 0 &&
+        nr < R &&
+        nc >= 0 &&
+        nc < C &&
+        grid[nr][nc] === 0 &&
+        dist[nr][nc] === -1
+      ) {
+        dist[nr][nc] = dist[r][c] + 1;
+        q.push([nr, nc]);
+      }
+    }
+  }
+  return dist[tr][tc];
+}
+
+const grid = [
+  [0, 0, 1, 0],
+  [0, 0, 0, 0],
+  [1, 0, 1, 0],
+  [0, 0, 0, 0],
+];
+console.log(shortestPathGrid(grid, 0, 0, 3, 3));
+```
+
+팁:
+
+- 격자에선 방문표시는 dist가 -1인지로 겸사겸사 체크하면 깔끔해.
+- 목표 지점에 도달하면 바로 break로 조기 종료하면 살짝 더 빨라진다.
+
+## 4) JS vs Python 구현 차이 — 실무 감각 정리
+
+- 큐(Queue)
+- Python: collections.deque가 표준 해답. popleft()가 O(1).
+- JS: Array.shift()는 O(n). head 인덱스 방식 또는 경량 Queue 클래스로 O(1) 시뮬레이션 권장.
+- 자료구조 선택
+- Python: dict, set로 충분. defaultdict(list) 쓰면 인접리스트 만들기 더 편함.
+- JS: 키가 동적이면 Map/Set 권장. {}는 키가 문자열로 강제돼 숫자 키 섞일 때 헷갈릴 수 있음.
+- 초기화 패턴
+- Python: [[-1]\*C for \_ in range(R)]로 2차원 배열 독립 생성.
+- JS: Array(C).fill(Array(R).fill(-1))는 내부 배열이 공유돼서 위험. Array.from으로 행마다 새 배열 생성하자.
+- 순회 문법
+- Python: for v in adj[u].
+- JS: for (const v of adj.get(u) || []).
+- 성능/메모리 팁
+- 방문여부가 단순 불리언이면 Python은 리스트, JS는 Uint8Array 같은 TypedArray로 메모리 아낄 수 있음.
+- 목표가 하나면 “발견 즉시 종료”로 평균 시간 단축.
+- 노드 수가 크면 JS는 콘솔 출력 누적보다 문자열 합쳐 한 번에 출력하는 게 유리.
+
+---
+
+오늘은 BFS 감 잡는 데 필요한 최소치만 단단히 챙겼어.
+큐와 방문표시만 잊지 않으면, 그래프든 격자든 BFS는 늘 같은 패턴이야.
+실무 팁 하나만 더: JS에선 shift() 대신 head 인덱스, Python에선 deque — 이 두 가지만 습관으로 박아두면 된다.
+
+---
