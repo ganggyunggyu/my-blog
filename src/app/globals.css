@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 :root {
@@ -9,6 +10,7 @@
   --border: #d4c4a8;
   --shadow: rgba(61, 52, 39, 0.1);
   --accent-hover: #8b6f5c;
+  --code-bg: #2d2a2e;
 }
 
 @theme inline {
@@ -27,6 +29,7 @@
   --border: #4a3f35;
   --shadow: rgba(0, 0, 0, 0.3);
   --accent-hover: #c4956a;
+  --code-bg: #1e1e1e;
 }
 
 body {
@@ -95,7 +98,7 @@ body {
 }
 
 .prose pre {
-  background-color: var(--muted);
+  background-color: var(--code-bg);
   border-radius: 0.5rem;
   padding: 1rem;
   overflow-x: auto;
@@ -106,6 +109,7 @@ body {
   padding: 0.2rem 0.4rem;
   border-radius: 0.25rem;
   font-size: 0.875em;
+  font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
 }
 
 .prose pre code {
@@ -198,7 +202,7 @@ code[class*="language-"],
 pre[class*="language-"] {
   color: var(--foreground);
   background: none;
-  font-family: 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
+  font-family: 'Fira Code', 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
   font-size: 0.9em;
   text-align: left;
   white-space: pre;
@@ -207,6 +211,7 @@ pre[class*="language-"] {
   word-wrap: normal;
   line-height: 1.5;
   tab-size: 4;
+  font-feature-settings: 'liga' 1, 'calt' 1; /* Fira Code 리가처 활성화 */
 }
 
 pre[class*="language-"] {

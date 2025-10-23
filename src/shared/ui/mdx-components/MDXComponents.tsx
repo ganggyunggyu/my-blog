@@ -122,6 +122,14 @@ export const MDXComponents = {
     const PreWithCopy = () => {
       const [copied, setCopied] = useState(false);
 
+      // code 태그의 className에서 언어 추출
+      const getLanguage = (): string | null => {
+        const child = props.children as { props?: { className?: string } };
+        const className = child?.props?.className || '';
+        const match = className.match(/language-(\w+)/);
+        return match ? match[1] : null;
+      };
+
       const handleCopy = () => {
         // props.children이 code 태그를 포함하는 경우 처리
         const getTextContent = (node: unknown): string => {
@@ -145,12 +153,27 @@ export const MDXComponents = {
         setTimeout(() => setCopied(false), 2000);
       };
 
+      const language = getLanguage();
+
       return (
         <div className="relative group my-6">
+          {/* 언어 표시 */}
+          {language && (
+            <div className="absolute top-0 left-0 px-3 py-1 bg-[var(--accent)] text-white text-xs font-medium rounded-tl-lg rounded-br-lg z-10">
+              {language.toUpperCase()}
+            </div>
+          )}
+
           <pre
-            className="bg-[var(--muted)] rounded-lg p-4 overflow-x-auto"
+            className="rounded-lg p-4 overflow-x-auto"
+            style={{
+              paddingTop: language ? '2.5rem' : '1rem',
+              backgroundColor: 'var(--code-bg)'
+            }}
             {...props}
           />
+
+          {/* 복사 버튼 */}
           <button
             onClick={handleCopy}
             className="absolute top-3 right-3 px-3 py-1.5 text-xs font-medium bg-[var(--background)] text-[var(--foreground)] border border-[var(--border)] rounded shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[var(--accent)] hover:text-white hover:border-[var(--accent)] z-10"
