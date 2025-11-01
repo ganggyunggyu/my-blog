@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { ReadingProgress } from '@/shared/ui/reading-progress';
 import { TableOfContents } from '@/features/table-of-contents';
 import rehypePrism from 'rehype-prism-plus';
+import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 import React from 'react';
 
@@ -93,7 +94,7 @@ export default async function PostPage({ params }: Props) {
             options={{
               mdxOptions: {
                 remarkPlugins: [remarkGfm],
-                rehypePlugins: [[rehypePrism, { ignoreMissing: true }]],
+                rehypePlugins: [rehypeSlug, [rehypePrism, { ignoreMissing: true }]],
               },
             }}
           />
