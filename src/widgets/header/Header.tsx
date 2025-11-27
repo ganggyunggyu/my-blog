@@ -6,6 +6,13 @@ import { ThemeToggle } from '@/shared/ui/theme-toggle';
 import { useEffect, useState } from 'react';
 import { HiMenu, HiX } from 'react-icons/hi';
 
+const NAV_LINKS = [
+  { href: '/', label: '홈' },
+  { href: '/portfolio', label: '포트폴리오' },
+  { href: '/posts', label: '포스트' },
+  { href: '/editor', label: '에디터' },
+] as const;
+
 export const Header = () => {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
@@ -34,12 +41,6 @@ export const Header = () => {
     return pathname.startsWith(path);
   };
 
-  const navLinks = [
-    { href: '/', label: '홈' },
-    { href: '/posts', label: '포스트' },
-    { href: '/editor', label: '에디터' },
-  ];
-
   return (
     <>
       <header
@@ -56,7 +57,7 @@ export const Header = () => {
           </Link>
 
           <div className="hidden md:flex items-center gap-3">
-            {navLinks.map((link) => (
+            {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -113,7 +114,7 @@ export const Header = () => {
               </button>
             </div>
 
-            {navLinks.map((link) => (
+            {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -131,7 +132,7 @@ export const Header = () => {
         </div>
       </div>
 
-      <div className="md:hidden fixed bottom-6 right-6 z-50 backdrop-blur-md bg-[var(--background)]/80 border border-[var(--border)] rounded-full p-3 shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-30 h-[50px]">
+      <div className="md:hidden fixed bottom-6 right-6 z-50 backdrop-blur-md bg-[var(--background)]/80 border border-[var(--border)] rounded-full p-3 shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 h-[50px]">
         <ThemeToggle />
       </div>
     </>
