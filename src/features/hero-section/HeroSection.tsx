@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { AboutSection } from './AboutSection';
-import { HiDocumentText, HiPencilSquare } from 'react-icons/hi2';
+import { HiDocumentText, HiBriefcase } from 'react-icons/hi2';
 
 export const HeroSection = () => {
   return (
@@ -45,10 +45,11 @@ export const HeroSection = () => {
             포스트 보기
           </Link>
           <Link
-            href="/editor"
+            href="/portfolio"
             className="vintage-button text-base px-8 py-3 flex items-center gap-2"
           >
-            <HiPencilSquare className="text-lg" />글 작성하기
+            <HiBriefcase className="text-lg" />
+            포트폴리오 보러가기
           </Link>
         </div>
 
