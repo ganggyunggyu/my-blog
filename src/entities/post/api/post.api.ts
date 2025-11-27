@@ -2,6 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import { PostMeta, Post } from '../model/post.types';
+import {
+  calculateReadingTime,
+  calculateContentLength,
+} from '@/shared/lib/content-utils';
 
 const postsDirectory = path.join(process.cwd(), 'src/content/posts');
 
@@ -19,11 +23,8 @@ export const getAllPosts = (): PostMeta[] => {
       const fileContents = fs.readFileSync(fullPath, 'utf8');
       const { data, content } = matter(fileContents);
 
-      const words = content.split(/\s+/).length;
-      const koreanChars = (content.match(/[\uac00-\ud7af]/g) || []).length;
-      const readingTime = Math.ceil((words / 200 + koreanChars / 500) / 2);
-
-      const contentLength = content.replace(/\s/g, '').length;
+      const readingTime = calculateReadingTime(content);
+      const contentLength = calculateContentLength(content);
 
       return {
         slug,
@@ -45,11 +46,8 @@ export const getPostBySlug = (slug: string): Post | null => {
     const fileContents = fs.readFileSync(fullPath, 'utf8');
     const { data, content } = matter(fileContents);
 
-    const words = content.split(/\s+/).length;
-    const koreanChars = (content.match(/[\uac00-\ud7af]/g) || []).length;
-    const readingTime = Math.ceil((words / 200 + koreanChars / 500) / 2);
-
-    const contentLength = content.replace(/\s/g, '').length;
+    const readingTime = calculateReadingTime(content);
+    const contentLength = calculateContentLength(content);
 
     return {
       slug,
@@ -61,7 +59,10 @@ export const getPostBySlug = (slug: string): Post | null => {
       contentLength,
       content,
     };
-  } catch {
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error(`Failed to load post: ${slug}`, error);
+    }
     return null;
   }
 };
