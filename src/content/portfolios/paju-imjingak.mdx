@@ -1,0 +1,255 @@
+---
+title: 파주 임진각 평화누리 공원 AI/AR 도슨트
+description: Three.js와 페이스 트래킹을 활용한 AR 도슨트 서비스 개발 및 성능 최적화
+date: 2024-08-01
+tags: [Vue, Three.js, AI, AR]
+period: 2024년 8월 - 2024년 11월
+role: 서비스 섹션 80%, 게임/도슨트 섹션 20%
+demo: https://playar.syrup.co.kr/culture/index.html#/paju
+featured: true
+---
+
+# 파주 임진각 평화누리 공원 AI/AR 도슨트
+
+> 2024년 8월 - 2024년 11월 (컬쳐 커넥션)
+
+## 프로젝트 개요
+
+파주 임진각의 다양한 볼거리와 캠프 그리브스 전시관을 설명해주는 **AI 도슨트**와 **미니 게임**을 제공하는 AR 서비스입니다.
+
+- **기여도**: 서비스 섹션 80%, 게임/도슨트 섹션 20%
+- **서비스 링크**: [https://playar.syrup.co.kr/culture/index.html#/paju](https://playar.syrup.co.kr/culture/index.html#/paju)
+- **소속**: 컬쳐 커넥션
+
+## 기술 스택
+
+- **Vue.js** - 프론트엔드 프레임워크
+- **JavaScript** - 개발 언어
+- **Three.js** - 3D 그래픽 렌더링
+- **Face Tracking Library** - 얼굴 인식 및 트래킹
+- **Naver Map API** - 지도 및 길찾기
+
+## 주요 기능 및 구현
+
+### 1. AI 도슨트 시스템
+
+기존 도슨트 서비스에 AI 기능을 추가하여 더 풍부한 정보를 제공합니다.
+
+```javascript
+// AI 도슨트 음성 재생
+const playAIGuide = async (spotId) => {
+  const audioUrl = await fetchAIGuideAudio(spotId);
+  const audio = new Audio(audioUrl);
+  audio.play();
+};
+```
+
+### 2. Three.js 기반 미니 게임
+
+페이스 트래킹 오픈소스를 활용한 인터랙티브 미니게임을 개발했습니다.
+
+```javascript
+import * as THREE from 'three';
+import { FaceTracker } from 'face-tracking-lib';
+
+// Three.js 씬 초기화
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+
+// 페이스 트래킹 초기화
+const faceTracker = new FaceTracker({
+  onFaceDetected: (faceData) => {
+    updateGameObject(faceData);
+  }
+});
+```
+
+### 3. 길찾기 기능
+
+Naver Map API를 활용하여 관광지까지의 경로를 안내합니다.
+
+```javascript
+// Naver Map 길찾기
+const showRoute = (destination) => {
+  const { naver } = window;
+  const map = new naver.maps.Map('map', {
+    center: new naver.maps.LatLng(37.8908, 126.7484),
+    zoom: 15
+  });
+
+  // 경로 표시
+  const polyline = new naver.maps.Polyline({
+    path: calculateRoute(destination),
+    map: map,
+    strokeColor: '#5347AA',
+    strokeWeight: 5
+  });
+};
+```
+
+## 성능 최적화
+
+### 1. 게임 초기 로딩 시간 최적화
+
+**Before**: 5~10초
+**After**: 2~3초
+**개선율**: 약 70% 단축
+
+```javascript
+// 지연 로딩 적용
+const loadGameAssets = async () => {
+  // 필수 리소스만 먼저 로드
+  const essentials = await Promise.all([
+    loadModel('character.glb'),
+    loadTexture('background.jpg')
+  ]);
+
+  // 게임 시작
+  startGame(essentials);
+
+  // 나머지 리소스는 백그라운드에서 로드
+  loadOptionalAssets();
+};
+```
+
+### 2. 저사양 디바이스 지원
+
+프레임 조정을 통해 저사양 디바이스에서도 원활한 게임 진행이 가능하도록 최적화했습니다.
+
+```javascript
+// 디바이스 성능에 따른 프레임 조정
+const getOptimalFPS = () => {
+  const performance = checkDevicePerformance();
+
+  if (performance === 'high') return 60;
+  if (performance === 'medium') return 30;
+  return 20; // low performance
+};
+
+// 렌더링 최적화
+let lastRenderTime = 0;
+const targetFPS = getOptimalFPS();
+const frameInterval = 1000 / targetFPS;
+
+const animate = (currentTime) => {
+  requestAnimationFrame(animate);
+
+  const deltaTime = currentTime - lastRenderTime;
+
+  if (deltaTime > frameInterval) {
+    lastRenderTime = currentTime;
+    renderer.render(scene, camera);
+  }
+};
+```
+
+### 3. 메모리 관리
+
+```javascript
+// Three.js 리소스 정리
+const cleanup = () => {
+  // Geometry 해제
+  geometry.dispose();
+
+  // Material 해제
+  material.dispose();
+
+  // Texture 해제
+  texture.dispose();
+
+  // Renderer 정리
+  renderer.dispose();
+};
+
+// 페이지 이탈 시 정리
+window.addEventListener('beforeunload', cleanup);
+```
+
+## 기술적 도전과 해결
+
+### 페이스 트래킹 정확도 개선
+
+**문제**: 다양한 조명 환경에서 얼굴 인식 정확도가 떨어짐
+
+**해결**:
+- 조명 보정 알고리즘 적용
+- 트래킹 실패 시 재시도 로직 구현
+
+```javascript
+const improvedFaceTracking = {
+  retryCount: 0,
+  maxRetries: 3,
+
+  detectFace: async function() {
+    try {
+      const face = await faceTracker.detect();
+      this.retryCount = 0;
+      return face;
+    } catch (error) {
+      if (this.retryCount < this.maxRetries) {
+        this.retryCount++;
+        // 조명 보정 후 재시도
+        await adjustLighting();
+        return this.detectFace();
+      }
+      throw error;
+    }
+  }
+};
+```
+
+## 성과 및 배운 점
+
+### 성과
+- ✅ 게임 로딩 시간 70% 개선 (5~10초 → 2~3초)
+- ✅ 저사양 디바이스 지원으로 사용자 커버리지 확대
+- ✅ 안정적인 AR 경험 제공
+
+### 배운 점
+
+**1. WebGL 최적화**
+- Three.js의 렌더링 파이프라인 이해
+- GPU 메모리 관리의 중요성
+
+**2. 성능 모니터링**
+```javascript
+// 실시간 FPS 모니터링
+const stats = {
+  fps: 0,
+  frameCount: 0,
+  lastTime: performance.now(),
+
+  update: function() {
+    this.frameCount++;
+    const currentTime = performance.now();
+    const delta = currentTime - this.lastTime;
+
+    if (delta >= 1000) {
+      this.fps = Math.round((this.frameCount * 1000) / delta);
+      this.frameCount = 0;
+      this.lastTime = currentTime;
+
+      // 성능 저하 감지
+      if (this.fps < 20) {
+        optimizeRendering();
+      }
+    }
+  }
+};
+```
+
+**3. 크로스 브라우저 호환성**
+- 다양한 모바일 브라우저에서의 WebGL 지원 차이 체감
+- Fallback 전략의 중요성 학습
+
+## 향후 개선 방향
+
+- [ ] PWA로 전환하여 오프라인 지원
+- [ ] 더 다양한 미니게임 추가
+- [ ] AI 음성 품질 개선
+- [ ] 다국어 지원 (영어, 중국어, 일본어)
+
+---
+
+**성능 최적화를 통해 더 많은 사용자에게 원활한 AR 경험을 제공할 수 있었습니다.**
