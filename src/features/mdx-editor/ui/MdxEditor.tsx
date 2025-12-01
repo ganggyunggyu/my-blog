@@ -6,27 +6,7 @@ import { PortfolioMetadataForm } from './PortfolioMetadataForm';
 import { CodeEditor } from './CodeEditor';
 import { PreviewPane } from './PreviewPane';
 import { HiDownload, HiEye, HiCode, HiDocumentText, HiBriefcase } from 'react-icons/hi';
-
-type ContentType = 'post' | 'portfolio';
-
-interface PostMetadata {
-  title: string;
-  date: string;
-  tags: string[];
-  excerpt: string;
-}
-
-interface PortfolioMetadata {
-  title: string;
-  description: string;
-  date: string;
-  tags: string[];
-  period?: string;
-  role?: string;
-  github?: string;
-  demo?: string;
-  featured: boolean;
-}
+import { ContentType, PostMetadata, PortfolioMetadata } from '@/features/mdx-editor/types';
 
 export const MdxEditor = () => {
   const [contentType, setContentType] = useState<ContentType>('post');

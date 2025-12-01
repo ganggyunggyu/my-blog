@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, ReactElement } from 'react';
 import matter from 'gray-matter';
 
 interface Props {
@@ -26,7 +26,7 @@ export const PreviewPane = ({ mdx }: Props) => {
   // 간단한 마크다운 렌더링 (제목, 리스트, 코드 블록)
   const renderMarkdown = (text: string) => {
     const lines = text.split('\n');
-    const elements: JSX.Element[] = [];
+    const elements: ReactElement[] = [];
     let inCodeBlock = false;
     let codeBlockContent: string[] = [];
     let codeBlockLang = '';
