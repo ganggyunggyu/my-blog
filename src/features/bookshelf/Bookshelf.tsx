@@ -49,7 +49,7 @@ export const Bookshelf = ({ posts }: Props) => {
             />
 
             {/* 책들 */}
-            <div className="flex items-end justify-center gap-2 pb-4 px-4 flex-wrap">
+            <div className="flex items-end justify-start gap-2 pb-4 px-4 overflow-x-auto bookshelf-scroll">
               {displayPosts.map((post, index) => (
                 <Book key={post.slug} post={post} index={index} />
               ))}
