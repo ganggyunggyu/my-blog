@@ -29,6 +29,12 @@ const blogs: BlogItem[] = [
     description: '감뽕이',
     color: '#03C75A',
   },
+  {
+    name: 'Naver Blog',
+    url: 'https://blog.naver.com/llo__8ii',
+    description: '김장철',
+    color: '#03C75A',
+  },
 ];
 
 export const BlogSection = () => {
