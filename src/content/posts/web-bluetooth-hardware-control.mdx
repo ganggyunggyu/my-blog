@@ -1,0 +1,454 @@
+---
+title: Web Bluetooth API로 브라우저에서 하드웨어 제어하기
+date: 2025-12-31
+tags: [Web Bluetooth, ESP32, IoT, JavaScript, TypeScript]
+excerpt: 별도의 앱 설치 없이 웹 브라우저에서 직접 BLE 디바이스와 통신하는 방법을 알아봅니다. ESP32와 연동하는 실제 프로젝트 경험을 바탕으로 설명합니다.
+---
+
+# Web Bluetooth API로 브라우저에서 하드웨어 제어하기
+
+웹 브라우저에서 Bluetooth 디바이스를 제어할 수 있다는 사실을 알고 계신가요? Web Bluetooth API를 사용하면 별도의 네이티브 앱 없이도 BLE(Bluetooth Low Energy) 디바이스와 통신할 수 있습니다.
+
+최근 포토카드 키오스크 프로젝트에서 ESP32를 웹에서 직접 제어하는 기능을 구현했습니다. 이 경험을 바탕으로 Web Bluetooth API 사용법을 정리합니다.
+
+## Web Bluetooth API란?
+
+Web Bluetooth API는 웹 페이지에서 Bluetooth Low Energy 디바이스에 연결하고 통신할 수 있게 해주는 Web API입니다.
+
+### 지원 환경
+
+- Chrome (Windows, macOS, Linux, Android)
+- Edge (Chromium 기반)
+- Opera
+- iOS에서는 지원하지 않음 (Safari 미지원)
+
+### 보안 요구사항
+
+Web Bluetooth는 보안상의 이유로 다음 조건에서만 동작합니다:
+
+- HTTPS 환경 또는 localhost
+- 사용자 제스처(클릭 등)를 통한 연결 요청
+- 사용자가 직접 디바이스를 선택해야 함
+
+## 기본 사용법
+
+### 1. 디바이스 검색 및 연결
+
+```typescript
+// BLE 디바이스 연결
+const connectToDevice = async () => {
+  try {
+    // 사용자에게 디바이스 선택 팝업 표시
+    const device = await navigator.bluetooth.requestDevice({
+      filters: [
+        { services: ['4fafc201-1fb5-459e-8fcc-c5c9c331914b'] }, // 서비스 UUID로 필터링
+        // 또는 이름으로 필터링
+        // { name: 'MyDevice' },
+        // { namePrefix: 'Arduino' }
+      ]
+    });
+
+    console.log('디바이스 선택됨:', device.name);
+
+    // GATT 서버에 연결
+    const server = await device.gatt!.connect();
+    console.log('연결 성공');
+
+    return { device, server };
+  } catch (error) {
+    console.error('연결 실패:', error);
+    throw error;
+  }
+};
+```
+
+`requestDevice`를 호출하면 브라우저가 주변 BLE 디바이스 목록을 보여주고, 사용자가 연결할 디바이스를 선택합니다.
+
+### 2. 서비스와 특성(Characteristic) 가져오기
+
+BLE 통신은 서비스(Service)와 특성(Characteristic) 개념으로 구성됩니다.
+
+- **서비스**: 관련된 기능들의 그룹 (예: 심박수 측정 서비스)
+- **특성**: 실제 데이터를 읽고 쓰는 단위 (예: 현재 심박수 값)
+
+```typescript
+const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+const CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+
+const getCharacteristic = async (server: BluetoothRemoteGATTServer) => {
+  // Primary Service 가져오기
+  const service = await server.getPrimaryService(SERVICE_UUID);
+
+  // Characteristic 가져오기
+  const characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+  return characteristic;
+};
+```
+
+### 3. 데이터 쓰기
+
+```typescript
+const sendCommand = async (characteristic: BluetoothRemoteGATTCharacteristic, command: string) => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(command);
+
+  await characteristic.writeValue(data);
+  console.log('명령 전송:', command);
+};
+
+// 사용 예시
+await sendCommand(characteristic, 'TRIGGER');
+```
+
+### 4. 데이터 읽기
+
+```typescript
+// 단일 읽기
+const readValue = async (characteristic: BluetoothRemoteGATTCharacteristic) => {
+  const value = await characteristic.readValue();
+  const decoder = new TextDecoder();
+  return decoder.decode(value);
+};
+
+// 알림(Notification) 구독 - 실시간 데이터 수신
+const subscribeToNotifications = async (characteristic: BluetoothRemoteGATTCharacteristic) => {
+  await characteristic.startNotifications();
+
+  characteristic.addEventListener('characteristicvaluechanged', (event) => {
+    const target = event.target as BluetoothRemoteGATTCharacteristic;
+    const value = target.value;
+    const decoder = new TextDecoder();
+    console.log('수신된 데이터:', decoder.decode(value));
+  });
+};
+```
+
+## React에서 사용하기
+
+실제 프로젝트에서 사용한 커스텀 훅입니다.
+
+```typescript
+// hooks/useBleConnection.ts
+import { useState, useCallback } from 'react';
+
+const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+const CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+
+interface BleState {
+  device: BluetoothDevice | null;
+  isConnected: boolean;
+  isConnecting: boolean;
+  error: string | null;
+}
+
+export const useBleConnection = () => {
+  const [state, setState] = useState<BleState>({
+    device: null,
+    isConnected: false,
+    isConnecting: false,
+    error: null
+  });
+
+  const [characteristic, setCharacteristic] =
+    useState<BluetoothRemoteGATTCharacteristic | null>(null);
+
+  const connect = useCallback(async () => {
+    setState(prev => ({ ...prev, isConnecting: true, error: null }));
+
+    try {
+      // 1. 디바이스 선택
+      const device = await navigator.bluetooth.requestDevice({
+        filters: [{ services: [SERVICE_UUID] }]
+      });
+
+      // 2. 연결 해제 이벤트 리스너
+      device.addEventListener('gattserverdisconnected', () => {
+        setState(prev => ({ ...prev, isConnected: false }));
+        setCharacteristic(null);
+      });
+
+      // 3. GATT 서버 연결
+      const server = await device.gatt!.connect();
+
+      // 4. 서비스 및 특성 가져오기
+      const service = await server.getPrimaryService(SERVICE_UUID);
+      const char = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+      setCharacteristic(char);
+      setState({
+        device,
+        isConnected: true,
+        isConnecting: false,
+        error: null
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '연결 실패';
+      setState(prev => ({
+        ...prev,
+        isConnecting: false,
+        error: message
+      }));
+    }
+  }, []);
+
+  const disconnect = useCallback(() => {
+    if (state.device?.gatt?.connected) {
+      state.device.gatt.disconnect();
+    }
+    setState({
+      device: null,
+      isConnected: false,
+      isConnecting: false,
+      error: null
+    });
+    setCharacteristic(null);
+  }, [state.device]);
+
+  const sendCommand = useCallback(async (command: string) => {
+    if (!characteristic) {
+      throw new Error('연결되지 않음');
+    }
+
+    const encoder = new TextEncoder();
+    await characteristic.writeValue(encoder.encode(command));
+  }, [characteristic]);
+
+  return {
+    ...state,
+    connect,
+    disconnect,
+    sendCommand
+  };
+};
+```
+
+### 컴포넌트에서 사용
+
+```tsx
+// components/BleController.tsx
+import { useBleConnection } from '@/hooks/useBleConnection';
+
+export const BleController = () => {
+  const {
+    isConnected,
+    isConnecting,
+    error,
+    connect,
+    disconnect,
+    sendCommand
+  } = useBleConnection();
+
+  const handleTrigger = async () => {
+    try {
+      await sendCommand('TRIGGER');
+    } catch (e) {
+      console.error('명령 전송 실패:', e);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      {error && (
+        <p className="text-red-500">{error}</p>
+      )}
+
+      {!isConnected ? (
+        <button
+          onClick={connect}
+          disabled={isConnecting}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          {isConnecting ? '연결 중...' : 'BLE 연결'}
+        </button>
+      ) : (
+        <>
+          <p className="text-green-500">연결됨</p>
+          <button
+            onClick={handleTrigger}
+            className="px-4 py-2 bg-green-500 text-white rounded"
+          >
+            릴레이 트리거
+          </button>
+          <button
+            onClick={disconnect}
+            className="px-4 py-2 bg-gray-500 text-white rounded"
+          >
+            연결 해제
+          </button>
+        </>
+      )}
+    </div>
+  );
+};
+```
+
+## ESP32 펌웨어 예제
+
+웹에서 명령을 받을 ESP32 펌웨어 코드입니다.
+
+```cpp
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
+
+#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+#define RELAY_PIN 5
+
+BLEServer *pServer = NULL;
+BLECharacteristic *pCharacteristic = NULL;
+bool deviceConnected = false;
+
+class ServerCallbacks : public BLEServerCallbacks {
+  void onConnect(BLEServer *pServer) {
+    deviceConnected = true;
+    Serial.println("Client connected");
+  }
+
+  void onDisconnect(BLEServer *pServer) {
+    deviceConnected = false;
+    Serial.println("Client disconnected");
+    // 재광고 시작
+    pServer->getAdvertising()->start();
+  }
+};
+
+class CharacteristicCallbacks : public BLECharacteristicCallbacks {
+  void onWrite(BLECharacteristic *pCharacteristic) {
+    std::string value = pCharacteristic->getValue();
+
+    if (value == "TRIGGER") {
+      Serial.println("Trigger received!");
+      digitalWrite(RELAY_PIN, HIGH);
+      delay(2000);  // 2초간 릴레이 활성화
+      digitalWrite(RELAY_PIN, LOW);
+    }
+  }
+};
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, LOW);
+
+  // BLE 초기화
+  BLEDevice::init("PhotoCardKiosk");
+
+  // BLE 서버 생성
+  pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new ServerCallbacks());
+
+  // BLE 서비스 생성
+  BLEService *pService = pServer->createService(SERVICE_UUID);
+
+  // BLE 특성 생성
+  pCharacteristic = pService->createCharacteristic(
+    CHARACTERISTIC_UUID,
+    BLECharacteristic::PROPERTY_READ |
+    BLECharacteristic::PROPERTY_WRITE |
+    BLECharacteristic::PROPERTY_NOTIFY
+  );
+
+  pCharacteristic->setCallbacks(new CharacteristicCallbacks());
+  pCharacteristic->addDescriptor(new BLE2902());
+
+  // 서비스 시작
+  pService->start();
+
+  // 광고 시작
+  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->addServiceUUID(SERVICE_UUID);
+  pAdvertising->setScanResponse(true);
+  pAdvertising->start();
+
+  Serial.println("BLE server ready!");
+}
+
+void loop() {
+  delay(1000);
+}
+```
+
+## 자주 발생하는 문제
+
+### 1. HTTPS 요구사항
+
+Web Bluetooth는 보안 컨텍스트(Secure Context)에서만 동작합니다.
+
+```bash
+# Next.js에서 HTTPS로 개발 서버 실행
+next dev --experimental-https
+```
+
+### 2. 사용자 제스처 필요
+
+`requestDevice`는 반드시 사용자 제스처(클릭 등)에 의해 호출되어야 합니다.
+
+```typescript
+// 잘못된 예 - 페이지 로드 시 자동 연결 시도
+useEffect(() => {
+  navigator.bluetooth.requestDevice({ ... }); // 실패
+}, []);
+
+// 올바른 예 - 버튼 클릭 시 연결
+<button onClick={connect}>연결</button>
+```
+
+### 3. 연결 해제 처리
+
+BLE 연결은 불안정할 수 있으므로 연결 해제 이벤트를 처리해야 합니다.
+
+```typescript
+device.addEventListener('gattserverdisconnected', () => {
+  console.log('연결 해제됨');
+  // 재연결 시도 또는 UI 업데이트
+});
+```
+
+### 4. UUID 형식
+
+UUID는 반드시 소문자로 작성해야 합니다.
+
+```typescript
+// 잘못된 예
+const SERVICE_UUID = '4FAFC201-1FB5-459E-8FCC-C5C9C331914B';
+
+// 올바른 예
+const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+```
+
+## 브라우저 지원 확인
+
+```typescript
+const checkBleSupport = () => {
+  if (!navigator.bluetooth) {
+    return { supported: false, reason: 'Web Bluetooth API를 지원하지 않는 브라우저입니다.' };
+  }
+
+  if (!window.isSecureContext) {
+    return { supported: false, reason: 'HTTPS 환경에서만 사용할 수 있습니다.' };
+  }
+
+  return { supported: true };
+};
+```
+
+## 마무리
+
+Web Bluetooth API를 사용하면 별도의 네이티브 앱 개발 없이 웹에서 직접 BLE 디바이스를 제어할 수 있습니다.
+
+핵심 포인트:
+- HTTPS 환경 필수
+- 사용자 제스처를 통한 연결 요청
+- 연결 해제 이벤트 처리
+- UUID는 소문자로 작성
+
+IoT 프로젝트에서 웹 기반 인터페이스가 필요하다면 Web Bluetooth를 고려해보세요. 별도 앱 설치가 필요 없어 사용자 진입 장벽을 낮출 수 있습니다.
+
+---
+
+**참고 자료**
+- [Web Bluetooth API - MDN](https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API)
+- [Web Bluetooth Specification](https://webbluetoothcg.github.io/web-bluetooth/)

@@ -1,0 +1,276 @@
+---
+title: Photo Card Kiosk
+description: 바코드 스캔으로 ESP32를 통해 포토카드를 출력하는 키오스크 시스템
+date: 2025-12-17
+tags: [Next.js, React, TypeScript, MongoDB, Web Bluetooth, ESP32]
+period: 2025년 12월 17일 - 현재
+role: 풀스택 개발 (프론트엔드 + 펌웨어)
+github: https://github.com/ganggyunggyu/photo-card-app
+featured: true
+---
+
+# Photo Card Kiosk
+
+> 2025년 12월 - 현재 (개인 프로젝트)
+
+## 프로젝트 개요
+
+쿠폰 바코드를 스캔하면 ESP32를 통해 포토카드를 출력하는 키오스크 시스템입니다. 바코드 인식부터 하드웨어 제어까지 완전한 엔드-투-엔드 솔루션을 구현했습니다.
+
+- **기여도**: 100%
+- **GitHub**: [photo-card-app](https://github.com/ganggyunggyu/photo-card-app)
+- **기술 스택**: Next.js 16, React 19, TypeScript, MongoDB, Web Bluetooth, ESP32
+
+## 시스템 아키텍처
+
+사용자가 바코드를 스캔하면 MongoDB에서 쿠폰을 검증하고, Web Bluetooth를 통해 ESP32로 명령을 전달합니다. ESP32는 릴레이를 트리거하여 실제 머신을 작동시킵니다.
+
+```
+[바코드 스캔] → [쿠폰 검증] → [BLE 연결] → [ESP32] → [릴레이 트리거] → [머신 작동]
+```
+
+## 기술 스택
+
+| 계층 | 기술 |
+|------|------|
+| 프론트엔드 | Next.js 16, React 19, TypeScript |
+| 스타일링 | Tailwind CSS 4 |
+| 데이터베이스 | MongoDB + Mongoose |
+| 바코드 인식 | @zxing/browser |
+| 애니메이션 | lottie-react |
+| 하드웨어 | ESP32 + Web Bluetooth API |
+| 펌웨어 | PlatformIO, Arduino Framework |
+
+## 주요 기능 및 구현
+
+### 1. 멀티 채널 바코드 입력
+
+USB 바코드 리더와 카메라 두 가지 입력 방식을 지원합니다. 사용자 환경에 따라 유연하게 선택할 수 있습니다.
+
+```typescript
+// features/barcode/hooks/useBarcodeScanner.ts
+export const useBarcodeScanner = () => {
+  const [scanResult, setScanResult] = useState<string | null>(null);
+
+  // USB 바코드 리더 (키보드 이벤트로 처리)
+  useEffect(() => {
+    let buffer = '';
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && buffer.length > 0) {
+        setScanResult(buffer);
+        buffer = '';
+        return;
+      }
+      buffer += e.key;
+    };
+
+    window.addEventListener('keypress', handleKeyPress);
+    return () => window.removeEventListener('keypress', handleKeyPress);
+  }, []);
+
+  // 카메라 스캔 (@zxing/browser 사용)
+  const startCameraScan = async () => {
+    const codeReader = new BrowserMultiFormatReader();
+    const result = await codeReader.decodeOnceFromVideoDevice(undefined, 'video');
+    setScanResult(result.getText());
+  };
+
+  return { scanResult, startCameraScan };
+};
+```
+
+### 2. 원자적 쿠폰 검증
+
+MongoDB의 `findOneAndUpdate`를 활용하여 쿠폰 중복 사용을 방지합니다. 동시 요청이 들어와도 하나만 성공하도록 원자성을 보장합니다.
+
+```typescript
+// app/api/coupons/verify/route.ts
+export async function POST(request: Request) {
+  const { couponCode } = await request.json();
+
+  // 원자적 업데이트로 중복 사용 방지
+  const coupon = await Coupon.findOneAndUpdate(
+    {
+      code: couponCode,
+      isUsed: false,
+      expiresAt: { $gt: new Date() }
+    },
+    {
+      $set: {
+        isUsed: true,
+        usedAt: new Date()
+      }
+    },
+    { new: true }
+  );
+
+  if (!coupon) {
+    return Response.json(
+      { error: 'INVALID_OR_USED_COUPON' },
+      { status: 400 }
+    );
+  }
+
+  return Response.json({ success: true, coupon });
+}
+```
+
+### 3. Web Bluetooth로 ESP32 제어
+
+Web Bluetooth API를 사용하여 브라우저에서 직접 ESP32와 통신합니다. 별도의 앱 설치 없이 웹에서 하드웨어를 제어할 수 있습니다.
+
+```typescript
+// features/ble/hooks/useBleConnection.ts
+const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+const CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+
+export const useBleConnection = () => {
+  const [device, setDevice] = useState<BluetoothDevice | null>(null);
+  const [characteristic, setCharacteristic] = useState<BluetoothRemoteGATTCharacteristic | null>(null);
+
+  const connect = async () => {
+    const device = await navigator.bluetooth.requestDevice({
+      filters: [{ services: [SERVICE_UUID] }]
+    });
+
+    const server = await device.gatt!.connect();
+    const service = await server.getPrimaryService(SERVICE_UUID);
+    const char = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+    setDevice(device);
+    setCharacteristic(char);
+  };
+
+  const triggerRelay = async () => {
+    if (!characteristic) return;
+
+    // 릴레이 트리거 명령 전송
+    const encoder = new TextEncoder();
+    await characteristic.writeValue(encoder.encode('TRIGGER'));
+  };
+
+  return { device, connect, triggerRelay };
+};
+```
+
+### 4. ESP32 펌웨어
+
+Arduino Framework 기반의 ESP32 펌웨어입니다. BLE 명령을 수신하면 릴레이를 2초간 활성화합니다.
+
+```cpp
+// esp32/src/main.cpp
+#include <BLEDevice.h>
+#include <BLEServer.h>
+
+#define RELAY_PIN 5
+#define COOLDOWN_MS 2000
+
+class TriggerCallback : public BLECharacteristicCallbacks {
+  void onWrite(BLECharacteristic *pCharacteristic) {
+    std::string value = pCharacteristic->getValue();
+
+    if (value == "TRIGGER") {
+      digitalWrite(RELAY_PIN, HIGH);
+      delay(COOLDOWN_MS);
+      digitalWrite(RELAY_PIN, LOW);
+    }
+  }
+};
+
+void setup() {
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, LOW);
+
+  BLEDevice::init("PhotoCardKiosk");
+  // BLE 서버 설정...
+}
+```
+
+### 5. 키오스크 모드
+
+전체 화면 모드와 터치 잠금을 지원합니다. 무인 운영에 적합한 환경을 제공합니다.
+
+```typescript
+// features/kiosk/hooks/useKioskMode.ts
+export const useKioskMode = () => {
+  const enterKioskMode = () => {
+    document.documentElement.requestFullscreen();
+
+    // 우클릭, 드래그 방지
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('selectstart', e => e.preventDefault());
+  };
+
+  const exitKioskMode = (password: string) => {
+    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
+      document.exitFullscreen();
+    }
+  };
+
+  return { enterKioskMode, exitKioskMode };
+};
+```
+
+## 폴더 구조 (FSD 아키텍처)
+
+```
+src/
+├── app/              # Next.js App Router
+│   ├── api/          # API 엔드포인트 (쿠폰 검증 등)
+│   └── page.tsx      # 키오스크 메인 페이지
+├── features/         # 기능 모듈
+│   ├── barcode/      # 바코드 스캔 기능
+│   ├── ble/          # Bluetooth 연결/제어
+│   ├── coupon/       # 쿠폰 검증 UI
+│   └── kiosk/        # 키오스크 모드
+├── entities/         # 도메인 모델
+│   └── coupon/       # 쿠폰 엔티티
+└── shared/           # 공용 유틸, 타입, UI
+
+esp32/                # Arduino 펌웨어 (PlatformIO)
+scripts/              # DB 시드, 키오스크 스크립트
+```
+
+## 기술적 도전
+
+### 1. Web Bluetooth HTTPS 요구사항
+
+Web Bluetooth API는 보안상 HTTPS 또는 localhost에서만 동작합니다. 개발 환경에서는 `next dev --experimental-https`로 해결하고, 프로덕션에서는 Vercel 배포로 자동 HTTPS를 적용했습니다.
+
+### 2. 동시 요청 처리
+
+여러 키오스크에서 동시에 같은 쿠폰을 스캔할 경우를 대비했습니다. MongoDB의 원자적 업데이트로 race condition을 방지하고, 하나의 요청만 성공하도록 구현했습니다.
+
+### 3. BLE 연결 안정성
+
+Bluetooth 연결이 끊어질 경우를 대비하여 자동 재연결 로직을 구현했습니다. 연결 상태를 지속적으로 모니터링하고 사용자에게 피드백을 제공합니다.
+
+```typescript
+device.addEventListener('gattserverdisconnected', async () => {
+  // 3초 후 자동 재연결 시도
+  setTimeout(() => {
+    device.gatt?.connect();
+  }, 3000);
+});
+```
+
+## 배포 및 운영
+
+- **웹 앱**: Vercel을 통한 서버리스 배포
+- **데이터베이스**: MongoDB Atlas
+- **키오스크 자동 실행**: 부팅 시 Chrome 전체 화면 모드로 자동 시작
+
+```bash
+# scripts/start-kiosk.sh
+chromium-browser --kiosk --disable-pinch \
+  --overscroll-history-navigation=0 \
+  https://your-app.vercel.app
+```
+
+## 마무리
+
+웹 기술만으로 하드웨어를 제어하는 IoT 프로젝트를 완성했습니다. Web Bluetooth API를 활용하면 별도의 네이티브 앱 없이도 브라우저에서 직접 BLE 디바이스와 통신할 수 있습니다. 이 경험을 통해 웹의 확장 가능성을 다시 한번 확인할 수 있었습니다.
+
+---
+
+**웹과 하드웨어의 경계를 허무는 프로젝트**
