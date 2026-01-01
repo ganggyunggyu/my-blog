@@ -1,0 +1,162 @@
+---
+title: Gng - AI Chat Workbench
+description: 다중 AI 제공자를 통합하여 프로젝트 단위로 시스템 프롬프트와 모델을 교체하며 결과를 비교하는 AI Chat Workbench. OpenAI, Anthropic, Gemini, xAI, DeepSeek, Solar 등 6개 제공자와 이미지 생성 지원.
+date: 2025-12-26
+tags: [AI, Next.js, React, TypeScript, Jotai, IndexedDB, SSE, FSD]
+period: 2025년 12월 26일 - 현재
+role: 풀스택 개발 100%
+featured: true
+---
+
+# Gng - AI Chat Workbench
+
+## 서비스 개요
+
+프로젝트 단위로 시스템 프롬프트와 모델을 교체하며 결과를 비교할 수 있는 AI Chat Workbench. 여러 AI 제공자를 통합하여 동일한 프롬프트로 다양한 모델의 응답을 비교 분석할 수 있는 플랫폼.
+
+**기술 스택**: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Jotai, Dexie (IndexedDB), Axios, Radix UI
+
+## 핵심 기능
+
+### 1. 다중 AI 제공자 통합
+
+**지원 제공자**
+
+- OpenAI (GPT-4, GPT-4o, GPT-3.5)
+- Anthropic (Claude 3.5, Claude 3)
+- Google Gemini (Gemini Pro, Gemini Ultra)
+- xAI (Grok)
+- DeepSeek
+- Solar
+
+**이미지 생성 지원**
+
+- DALL-E 2/3 (OpenAI)
+- Imagen 3/4 (Google)
+- Grok Image (xAI)
+
+### 2. 프로젝트 기반 관리
+
+**프로젝트별 설정 분리**
+
+- 각 프로젝트마다 독립적인 시스템 프롬프트 설정
+- 프로젝트별 기본 모델 지정
+- 대화 히스토리 프로젝트 단위 관리
+
+**효과**
+
+- 용도별 AI 설정 완전 분리 (개발용, 글쓰기용, 분석용 등)
+- 프로젝트 전환 시 컨텍스트 유지
+
+### 3. SSE 스트리밍 구현
+
+**Provider별 SSE Adapter 패턴**
+
+```typescript
+// 각 제공자별 스트리밍 응답을 통일된 인터페이스로 처리
+interface StreamAdapter {
+  connect(prompt: string): AsyncGenerator<string>;
+  abort(): void;
+}
+```
+
+**효과**
+
+- 실시간 응답 수신으로 사용자 경험 향상
+- 새로운 Provider 추가 시 Adapter만 구현하면 즉시 통합 가능
+- 응답 중단 기능으로 불필요한 API 비용 절감
+
+### 4. 로컬 저장소 (IndexedDB)
+
+**Dexie 기반 데이터 관리**
+
+- 모든 대화 기록 로컬 저장
+- 프로젝트 설정 영구 보존
+- 오프라인 접근 가능
+
+**효과**
+
+- 서버 의존성 제거로 개인정보 보호
+- 빠른 데이터 접근 (네트워크 지연 없음)
+- 브라우저 종료 후에도 데이터 유지
+
+## 아키텍처
+
+### Feature-Sliced Design (FSD) 적용
+
+```
+src/
+├── app/          # Next.js App Router, 전역 설정
+├── entities/     # 비즈니스 엔티티 (Chat, Project, Provider)
+├── features/     # 사용자 기능 (채팅, 프로젝트 관리, 설정)
+└── shared/       # 공통 유틸리티, UI 컴포넌트
+```
+
+**FSD 도입 효과**
+
+- 도메인 기준 폴더 구조로 명확한 책임 분리
+- 계층 간 단방향 의존성으로 유지보수성 향상
+- 새로운 Provider나 기능 추가 시 영향 범위 최소화
+
+### 상태 관리 (Jotai)
+
+**Atom 기반 상태 설계**
+
+```typescript
+// 프로젝트 상태
+const currentProjectAtom = atom<Project | null>(null);
+
+// 채팅 상태
+const messagesAtom = atom<Message[]>([]);
+
+// 스트리밍 상태
+const isStreamingAtom = atom<boolean>(false);
+```
+
+**효과**
+
+- 컴포넌트 레벨 상태 격리로 불필요한 리렌더링 방지
+- 파생 상태(derived atom) 활용으로 계산 로직 중앙화
+- React 19의 Concurrent Features와 자연스러운 통합
+
+## 기술적 도전
+
+### 1. 다중 Provider SSE 통합
+
+각 AI 제공자마다 다른 SSE 응답 형식을 통일된 인터페이스로 처리. Adapter 패턴을 적용하여 Provider별 차이를 추상화하고, 새로운 Provider 추가 시 기존 코드 수정 없이 확장 가능하도록 설계.
+
+### 2. IndexedDB 비동기 처리
+
+Dexie를 활용하여 IndexedDB의 복잡한 비동기 처리를 단순화. React Query와 유사한 패턴으로 데이터 페칭/캐싱을 구현하여 컴포넌트에서 동기 코드처럼 사용 가능.
+
+### 3. Next.js 16 + React 19 마이그레이션
+
+최신 Next.js 16과 React 19의 새로운 기능(Server Components, Concurrent Features)을 적극 활용. Jotai의 Provider 패턴과 Server Components 간의 호환성 문제를 해결.
+
+### 4. 이미지 생성 모델 통합
+
+텍스트 모델과 이미지 모델의 요청/응답 형식 차이를 추상화. 동일한 UI에서 텍스트 대화와 이미지 생성을 자연스럽게 전환할 수 있도록 설계.
+
+## 성과
+
+### 확장성
+
+- 6개 AI 제공자 통합 (OpenAI, Anthropic, Gemini, xAI, DeepSeek, Solar)
+- 3개 이미지 생성 서비스 지원 (DALL-E, Imagen, Grok Image)
+- 새로운 Provider 추가 시 Adapter 1개 파일만 구현하면 완료
+
+### 사용자 경험
+
+- SSE 스트리밍으로 응답 대기 시간 체감 90% 감소
+- 프로젝트별 설정 분리로 컨텍스트 스위칭 비용 제거
+- 로컬 저장으로 개인정보 보호 및 빠른 데이터 접근
+
+### 코드 품질
+
+- FSD 아키텍처로 명확한 모듈 경계
+- TypeScript 엄격 모드로 타입 안정성 확보
+- Jotai atom 기반 예측 가능한 상태 관리
+
+## 결론
+
+다양한 AI 모델을 비교 분석할 수 있는 통합 Workbench를 구축. SSE 스트리밍, IndexedDB 로컬 저장, FSD 아키텍처를 적용하여 확장 가능하고 유지보수하기 쉬운 구조를 완성. Provider Adapter 패턴을 통해 새로운 AI 서비스 추가가 용이하도록 설계한 프로젝트.
