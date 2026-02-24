@@ -1,0 +1,171 @@
+---
+title: KINOTON - 통합기술부 리소스 안분 관리 시스템
+description: 현장 기술 인력의 투입 시간을 기록하고 사업본부별 인건비를 자동으로 안분 계산하는 MVP 관리 시스템
+date: 2026-02-01
+tags: [NestJS, Next.js, React Native, TypeScript, Monorepo]
+period: 2026년 2월 - 현재
+role: 설계 및 전체 구현 (FE, BE, Mobile)
+featured: true
+---
+
+# KINOTON - 통합기술부 리소스 안분 관리 시스템
+
+> 2026년 2월 - 현재
+
+## 프로젝트 개요
+
+독립채산 체계를 운영하는 조직에서 통합기술부 인력이 여러 사업본부에 동시에 투입되면, 월말 인건비를 어느 부서에 얼마씩 배분해야 하는지 정량 근거가 없다는 문제가 있었다. 담당자가 매월 수작업으로 시간을 추정해 엑셀에 정리하는 방식으로 운영하다 보니 신뢰도가 낮고 처리 시간도 길었다.
+
+KINOTON은 이 문제를 해결하기 위한 MVP다. 현장 기술자가 모바일 앱으로 시간을 기록하면, 관리자 웹 대시보드에서 사업본부별 투입시간과 안분 비용을 즉시 확인할 수 있다.
+
+**구성 앱:**
+
+- 모바일 앱(기술자): React Native(Expo) — 출퇴근 기록, 시간 기록, 사업 선택
+- 관리자 웹: Next.js — 대시보드, 월 마감, 리포트
+- API 서버: NestJS — REST API, RBAC, 마감 잠금 로직
+
+**기술 스택:**
+
+| 영역 | 스택 |
+|------|------|
+| Backend | NestJS 11, TypeScript |
+| Web | Next.js 14, TanStack Query v5, Jotai, Tailwind CSS v4 |
+| Mobile | React Native (Expo 53), TanStack Query v5, Jotai |
+| Shared | packages/shared-types, packages/api-client (Axios) |
+| Monorepo | npm workspaces |
+
+---
+
+## 핵심 기능
+
+### 1. 시간 기록 (WorkSession)
+
+기술자가 사업본부와 사업을 선택한 뒤 시작 버튼을 누르면 `startAt`이 기록된다. 종료 시 `endAt`을 입력하면 서버에서 `durationMinutes`를 계산해 저장한다. 업무 구분은 `PROJECT`(사업 업무)와 `INTERNAL`(내부 업무) 두 가지다.
+
+```
+POST /work-sessions/start
+POST /work-sessions/:sessionId/stop
+GET  /work-sessions?fromDate=&toDate=&userId=
+```
+
+### 2. 월 마감 / 재개방
+
+관리자가 월 마감(`CLOSED`)을 실행하면 해당 월의 시간 기록 생성/수정이 전면 차단된다. 수정이 필요한 경우 재개방(`REOPENED`)을 요청해야 하며, 사유 입력이 필수다. 재개방/수정/재마감 이벤트는 `MonthClosure` 엔티티에 모두 기록된다.
+
+```
+POST /closures/:targetMonth/close
+POST /closures/:targetMonth/reopen   { reason: string }
+```
+
+서버 측에서는 시간 기록 생성·수정 API 진입 시 `assertMonthIsEditable`을 호출해 마감 상태를 검사한다.
+
+```typescript
+private assertMonthIsEditable = (workDate: string): void => {
+  const targetMonth = monthStart(workDate);
+  const closure = this.monthClosures.find((c) => c.targetMonth === targetMonth);
+  if (closure?.status === 'CLOSED') {
+    throw new ConflictException(`Month ${targetMonth} is already CLOSED`);
+  }
+};
+```
+
+### 3. 인건비 안분 계산
+
+직급별 시간당 단가(`HourlyRate`)는 유효기간(`effectiveFrom` ~ `effectiveTo`)을 가진다. 시간 기록 단위로 해당 날짜의 단가를 조회해 비용을 계산한다.
+
+```
+사업본부별 인건비 = Σ(durationMinutes / 60 × hourlyRate)
+가동률(%) = 프로젝트 업무시간 / 총 근무시간 × 100
+```
+
+### 4. 대시보드
+
+관리자 웹에서 월별로 사업본부 집계와 개인 가동률을 확인할 수 있다.
+
+```
+GET /dashboard/monthly-summary?targetMonth=2026-02
+GET /dashboard/personal-utilization?targetMonth=2026-02
+```
+
+### 5. 리포트 생성
+
+마감 완료 후 PDF 리포트를 생성하고 다운로드 URL을 반환한다. 재마감 시 버전이 증가해 이전 리포트 이력이 유지된다.
+
+```
+POST /reports/:targetMonth/generate
+GET  /reports/:targetMonth/:version/download
+```
+
+---
+
+## 아키텍처
+
+### 모노레포 구조
+
+```
+kinoton/
+├── apps/
+│   ├── api/        # NestJS (포트 7001)
+│   ├── web/        # Next.js (포트 7002)
+│   └── mobile/     # Expo (포트 7003)
+└── packages/
+    ├── shared-types/   # 공통 타입 (UserRole, WorkType 등)
+    └── api-client/     # Axios 기반 공통 HTTP 클라이언트
+```
+
+`packages/shared-types`에서 `UserRole`, `WorkType`, `LoginRequest`, `LoginResponse` 등을 정의하고, 웹과 모바일이 함께 참조한다. 타입을 한 곳에서 관리하므로 API 계약 변경 시 컴파일 단계에서 누락을 잡을 수 있다.
+
+### RBAC (역할 기반 접근 제어)
+
+세 가지 역할로 접근을 제어한다.
+
+| 역할 | 권한 |
+|------|------|
+| `TECHNICIAN` | 본인 시간/출퇴근 기록 생성·조회 |
+| `MANAGER` | 전체 조회, 월 마감/재개방, 단가 관리, 리포트 생성 |
+| `EXECUTIVE` | 읽기 전용 대시보드·리포트 조회 |
+
+컨트롤러에서 `requireAuth`, `requireManager` 같은 유틸로 역할을 검사한다.
+
+### FSD 구조 (웹)
+
+Next.js 관리자 웹은 FSD 아키텍처로 구성했다. 대시보드 위젯은 `widgets/dashboard-summary`에서 관리하고, TanStack Query와 Jotai를 조합해 서버 상태와 클라이언트 상태를 분리했다.
+
+---
+
+## 기술적 도전
+
+### 인메모리 스토어로 MVP 빠르게 검증
+
+DB 스키마 설계와 ORM 설정에 시간을 쓰지 않고, NestJS 서비스 레이어에 인메모리 배열로 데이터 스토어를 구현했다. 비즈니스 로직(마감 잠금, 단가 유효기간, 안분 계산)을 실제 DB 없이 빠르게 검증할 수 있다. 추후 PostgreSQL + TypeORM으로 교체해도 서비스 인터페이스는 그대로 유지된다.
+
+### 단가 유효기간 중복 방지
+
+같은 직급의 단가 유효기간이 겹치면 계산 결과가 달라진다. 단가 생성/수정 시 기존 구간과 날짜 범위가 겹치는지 검사한다.
+
+```typescript
+private isDateRangeOverlapped = (
+  startA: string, endA: string | null,
+  startB: string, endB: string | null,
+): boolean => {
+  const normalizedEndA = endA ?? '9999-12-31';
+  const normalizedEndB = endB ?? '9999-12-31';
+  return startA <= normalizedEndB && startB <= normalizedEndA;
+};
+```
+
+`effectiveTo`가 `null`이면 무기한으로 처리해 열린 구간끼리도 겹침을 감지한다.
+
+### 리포트 버전 관리
+
+마감 후 재개방 → 수정 → 재마감 시 새 버전의 리포트가 생성된다. 동일 월에 여러 버전이 존재할 수 있어 버전 번호를 기존 최대값 + 1로 증가시키는 방식으로 이력을 관리한다.
+
+---
+
+## 향후 계획
+
+- PostgreSQL + TypeORM으로 스토어 교체
+- BullMQ + Redis로 리포트 생성 비동기 처리
+- S3 호환 오브젝트 스토리지에 PDF 업로드
+- 모바일 앱 출퇴근 및 시간 기록 UI 완성
+- E2E 테스트: 기록 → 집계 → 마감 → 리포트 흐름
