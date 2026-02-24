@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { ThemeProvider } from '@/shared/ui/theme-provider';
+import { AppProvider } from '@/app/provider';
+import { cn } from '@/shared';
 import { Header } from '@/widgets/header';
 import { ScrollToTop } from '@/shared/ui/scroll-to-top';
 
@@ -26,12 +27,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className="antialiased">
-        <ThemeProvider>
+      <body className={cn('antialiased')}>
+        <AppProvider>
           <Header />
-          <main className="max-w-5xl mx-auto px-4 py-8">{children}</main>
+          <main className={cn('max-w-5xl', 'mx-auto', 'px-4', 'py-8')}>
+            {children}
+          </main>
           <ScrollToTop />
-        </ThemeProvider>
+        </AppProvider>
       </body>
     </html>
   );

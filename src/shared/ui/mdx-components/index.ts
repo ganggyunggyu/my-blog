@@ -1,1 +1,1 @@
-export { MDXComponents } from './MDXComponents';
+export { MDXComponents } from '@/shared/ui/mdx-components/MDXComponents';
