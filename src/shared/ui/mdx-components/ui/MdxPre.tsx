@@ -3,10 +3,15 @@
 import React from 'react';
 import { cn } from '@/shared';
 
+type MdxCodeElementProps = {
+  className?: unknown;
+  children?: React.ReactNode;
+};
+
 const getLanguage = (children: React.ReactNode): string | null => {
   const [firstChild] = React.Children.toArray(children);
 
-  if (!React.isValidElement(firstChild)) {
+  if (!React.isValidElement<MdxCodeElementProps>(firstChild)) {
     return null;
   }
 
@@ -26,7 +31,7 @@ const getTextContent = (node: React.ReactNode): string => {
     return node.map(getTextContent).join('');
   }
 
-  if (React.isValidElement(node)) {
+  if (React.isValidElement<MdxCodeElementProps>(node)) {
     return getTextContent(node.props.children);
   }
 
